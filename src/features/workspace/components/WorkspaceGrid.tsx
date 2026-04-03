@@ -48,6 +48,21 @@ export default function WorkspaceGrid() {
       const inShape = state.shapeMask[r][c];
       const symbol = state.pattern[r][c].symbol;
 
+      const rect = state.selection.rect;
+      const isSelected =
+        !!rect &&
+        r >= rect.minR &&
+        r <= rect.maxR &&
+        c >= rect.minC &&
+        c <= rect.maxC;
+
+      const inCapturedMotif =
+        state.tileSource.confirmed &&
+        r >= state.tileSource.originR &&
+        r < state.tileSource.originR + state.tileSource.tileRows &&
+        c >= state.tileSource.originC &&
+        c < state.tileSource.originC + state.tileSource.tileCols;
+
       cells.push(
         <div
           key={`${r}-${c}`}
@@ -88,11 +103,19 @@ export default function WorkspaceGrid() {
             boxSizing: "border-box",
             background: isCursor
               ? "#dbeafe"
-              : inShape
-                ? "#ffffff"
-                : "#e5e7eb",
+              : isSelected
+                ? "#bfdbfe"
+                : inCapturedMotif
+                  ? "#d1fae5"
+                  : inShape
+                    ? "#ffffff"
+                    : "#e5e7eb",
             color: "#111827",
-            outline: isCursor ? "2px solid #2563eb" : "none",
+            outline: isCursor
+              ? "2px solid #2563eb"
+              : inCapturedMotif
+                ? "2px solid #10b981"
+                : "none",
             outlineOffset: "-2px",
             userSelect: "none",
             cursor: "crosshair",

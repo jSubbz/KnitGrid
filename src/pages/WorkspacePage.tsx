@@ -49,6 +49,29 @@ export default function WorkspacePage() {
     gridWrapRef.current?.focus();
   }, []);
 
+  const handleTileAcross = () => {
+    if (!state.tileSource.confirmed) {
+      return;
+    }
+
+    const widthToLeftEdge = state.tileSource.originC + state.tileSource.tileCols;
+    const remainder = widthToLeftEdge % state.tileSource.tileCols;
+
+    if (remainder === 0) {
+      dispatch({ type: "TILE_ACROSS", strategy: "partial" });
+      return;
+    }
+
+    const usePartial = window.confirm(
+      "Tile width is not an exact multiple of the motif width.\n\nPress OK for partial fill.\nPress Cancel for truncate."
+    );
+
+    dispatch({
+      type: "TILE_ACROSS",
+      strategy: usePartial ? "partial" : "truncate",
+    });
+  };
+
   return (
     <main style={{ padding: 24, display: "grid", gap: 16 }}>
       <h1>Workspace</h1>
@@ -80,11 +103,33 @@ export default function WorkspacePage() {
         </button>
       </div>
 
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+        <button type="button" onClick={() => dispatch({ type: "CLEAR_SELECTION" })}>
+          Clear Selection
+        </button>
+        <button type="button" onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}>
+          Capture Motif
+        </button>
+        <button
+          type="button"
+          onClick={handleTileAcross}
+          disabled={!state.tileSource.confirmed}
+        >
+          Tile Across
+        </button>
+      </div>
+
       <p>
         Grid: {state.cols} × {state.rows}
       </p>
       <p>
         Cursor display position: row {state.rows - state.cursor.r}, col {state.cols - state.cursor.c}
+      </p>
+      <p>
+        Motif:{" "}
+        {state.tileSource.confirmed
+          ? `${state.tileSource.tileCols} × ${state.tileSource.tileRows} captured`
+          : "not captured"}
       </p>
 
       <div
@@ -104,6 +149,36 @@ export default function WorkspacePage() {
 
           if (shouldExitMirrorMode && (state.mirrorX || state.mirrorY)) {
             dispatch({ type: "CLEAR_MIRRORS" });
+          }
+
+          if (event.shiftKey && event.key === "ArrowLeft") {
+            event.preventDefault();
+            dispatch({ type: "EXTEND_SELECTION", dir: "left" });
+            return;
+          }
+
+          if (event.shiftKey && event.key === "ArrowRight") {
+            event.preventDefault();
+            dispatch({ type: "EXTEND_SELECTION", dir: "right" });
+            return;
+          }
+
+          if (event.shiftKey && event.key === "ArrowUp") {
+            event.preventDefault();
+            dispatch({ type: "EXTEND_SELECTION", dir: "up" });
+            return;
+          }
+
+          if (event.shiftKey && event.key === "ArrowDown") {
+            event.preventDefault();
+            dispatch({ type: "EXTEND_SELECTION", dir: "down" });
+            return;
+          }
+
+          if (event.key === "t" || event.key === "T") {
+            event.preventDefault();
+            dispatch({ type: "CAPTURE_MOTIF" });
+            return;
           }
 
           if (symbol) {
@@ -165,6 +240,9 @@ export default function WorkspacePage() {
         <p>0–5 and numpad 0–5 paint and advance.</p>
         <p>Delete/Backspace moves back and clears.</p>
         <p>Enter jumps to the next row start.</p>
+        <p>Shift + arrows selects a motif rectangle.</p>
+        <p>T captures the selected motif.</p>
+        <p>Tile Across fills leftward from the captured motif.</p>
       </div>
     </main>
   );

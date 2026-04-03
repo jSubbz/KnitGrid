@@ -28,7 +28,11 @@ export type WorkspaceAction =
   | { type: "MOVE_CURSOR"; dir: "left" | "right" | "up" | "down" }
   | { type: "NEXT_ROW_START" }
   | { type: "PAINT_AND_ADVANCE"; symbol: PatternSymbol }
-  | { type: "ERASE_AND_BACKSPACE" };
+  | { type: "ERASE_AND_BACKSPACE" }
+  | { type: "CLEAR_SELECTION" }
+  | { type: "EXTEND_SELECTION"; dir: "left" | "right" | "up" | "down" }
+  | { type: "CAPTURE_MOTIF" }
+  | { type: "TILE_ACROSS"; strategy: "partial" | "truncate" };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -116,6 +120,13 @@ function resizeProject(state: KnitProject, nextRows: number, nextCols: number): 
       c: cols - 1,
     },
     selectedRow: rows - 1,
+    selection: {
+      ...state.selection,
+      active: false,
+      anchor: null,
+      focus: null,
+      rect: null,
+    },
   };
 }
 
@@ -145,6 +156,38 @@ function getAdvancedCursor(state: KnitProject) {
   }
 
   return { r, c };
+}
+
+function moveCursorByDirection(
+  state: KnitProject,
+  dir: "left" | "right" | "up" | "down"
+) {
+  const { r, c } = state.cursor;
+
+  let nextR = r;
+  let nextC = c;
+
+  if (dir === "left") nextC -= 1;
+  if (dir === "right") nextC += 1;
+  if (dir === "up") nextR -= 1;
+  if (dir === "down") nextR += 1;
+
+  nextR = clamp(nextR, 0, state.rows - 1);
+  nextC = clamp(nextC, 0, state.cols - 1);
+
+  return { r: nextR, c: nextC };
+}
+
+function buildRect(
+  a: { r: number; c: number },
+  b: { r: number; c: number }
+) {
+  return {
+    minR: Math.min(a.r, b.r),
+    minC: Math.min(a.c, b.c),
+    maxR: Math.max(a.r, b.r),
+    maxC: Math.max(a.c, b.c),
+  };
 }
 
 export function workspaceReducer(
@@ -245,23 +288,12 @@ export function workspaceReducer(
     }
 
     case "MOVE_CURSOR": {
-      const { r, c } = state.cursor;
-
-      let nextR = r;
-      let nextC = c;
-
-      if (action.dir === "left") nextC -= 1;
-      if (action.dir === "right") nextC += 1;
-      if (action.dir === "up") nextR -= 1;
-      if (action.dir === "down") nextR += 1;
-
-      nextR = clamp(nextR, 0, state.rows - 1);
-      nextC = clamp(nextC, 0, state.cols - 1);
+      const nextCursor = moveCursorByDirection(state, action.dir);
 
       return {
         ...state,
-        cursor: { r: nextR, c: nextC },
-        selectedRow: nextR,
+        cursor: nextCursor,
+        selectedRow: nextCursor.r,
       };
     }
 
@@ -306,6 +338,119 @@ export function workspaceReducer(
         pattern: nextPattern,
         cursor: prevCursor,
         selectedRow: prevCursor.r,
+      };
+    }
+
+    case "CLEAR_SELECTION":
+      return {
+        ...state,
+        selection: {
+          ...state.selection,
+          active: false,
+          anchor: null,
+          focus: null,
+          rect: null,
+        },
+      };
+
+    case "EXTEND_SELECTION": {
+      const anchor = state.selection.active && state.selection.anchor
+        ? state.selection.anchor
+        : state.cursor;
+
+      const baseCursor = state.selection.active && state.selection.focus
+        ? state.selection.focus
+        : state.cursor;
+
+      const tempState = {
+        ...state,
+        cursor: baseCursor,
+      };
+
+      const nextCursor = moveCursorByDirection(tempState, action.dir);
+
+      return {
+        ...state,
+        cursor: nextCursor,
+        selectedRow: nextCursor.r,
+        selection: {
+          ...state.selection,
+          active: true,
+          anchor,
+          focus: nextCursor,
+          rect: buildRect(anchor, nextCursor),
+        },
+      };
+    }
+
+    case "CAPTURE_MOTIF": {
+      if (!state.selection.rect) {
+        return state;
+      }
+
+      const rect = state.selection.rect;
+
+      return {
+        ...state,
+        tileSource: {
+          ...state.tileSource,
+          originR: rect.minR,
+          originC: rect.minC,
+          tileRows: rect.maxR - rect.minR + 1,
+          tileCols: rect.maxC - rect.minC + 1,
+          confirmed: true,
+        },
+      };
+    }
+
+    case "TILE_ACROSS": {
+      if (!state.tileSource.confirmed) {
+        return state;
+      }
+
+      const { originR, originC, tileRows, tileCols } = state.tileSource;
+      const nextPattern = clonePattern(state.pattern);
+
+      const source: PatternCell[][] = [];
+
+      for (let rr = 0; rr < tileRows; rr += 1) {
+        const row: PatternCell[] = [];
+        for (let cc = 0; cc < tileCols; cc += 1) {
+          const srcR = originR + rr;
+          const srcC = originC + cc;
+          row.push({ ...state.pattern[srcR][srcC] });
+        }
+        source.push(row);
+      }
+
+      for (let baseC = originC; baseC > -tileCols; baseC -= tileCols) {
+        const wouldOverflowLeft = baseC < 0;
+
+        if (action.strategy === "truncate" && wouldOverflowLeft) {
+          continue;
+        }
+
+        for (let rr = 0; rr < tileRows; rr += 1) {
+          for (let cc = 0; cc < tileCols; cc += 1) {
+            const destR = originR + rr;
+            const destC = baseC + cc;
+
+            if (destR < 0 || destR >= state.rows || destC < 0 || destC >= state.cols) {
+              continue;
+            }
+
+            if (!state.shapeMask[destR][destC]) {
+              continue;
+            }
+
+            nextPattern[destR][destC] = { ...source[rr][cc] };
+          }
+        }
+      }
+
+      return {
+        ...state,
+        pattern: nextPattern,
       };
     }
 
