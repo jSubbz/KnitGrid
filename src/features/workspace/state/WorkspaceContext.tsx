@@ -16,7 +16,9 @@ import {
 type HistoryAction =
   | WorkspaceAction
   | { type: "UNDO" }
-  | { type: "REDO" };
+  | { type: "REDO" }
+  | { type: "LOAD_PROJECT"; project: KnitProject }
+  | { type: "RESET_PROJECT" };
 
 interface HistoryState {
   past: KnitProject[];
@@ -61,6 +63,22 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
       past: [...state.past, cloneProject(state.present)],
       present: cloneProject(next),
       future: newFuture,
+    };
+  }
+
+  if (action.type === "LOAD_PROJECT") {
+    return {
+      past: [],
+      present: cloneProject(action.project),
+      future: [],
+    };
+  }
+
+  if (action.type === "RESET_PROJECT") {
+    return {
+      past: [],
+      present: createEmptyProject(),
+      future: [],
     };
   }
 
