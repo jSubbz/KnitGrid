@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import type { PatternSymbol } from "../features/project/types";
+import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
 
 function keyToSymbol(event: React.KeyboardEvent<HTMLDivElement>): PatternSymbol | null {
   if (event.key >= "0" && event.key <= "5") {
@@ -42,27 +43,12 @@ function keyToSymbol(event: React.KeyboardEvent<HTMLDivElement>): PatternSymbol 
   }
 }
 
-const infoRows = [
-  { name: "Undo", description: "Step backward", hotkey: "Ctrl+Z" },
-  { name: "Redo", description: "Step forward", hotkey: "Ctrl+Y" },
-  { name: "Add cells", description: "Add shape cells", hotkey: "Left-drag" },
-  { name: "Remove cells", description: "Remove shape cells", hotkey: "Right-drag" },
-  { name: "Paint", description: "Paint and advance", hotkey: "0–5 / Num 0–5" },
-  { name: "Erase", description: "Back up and clear", hotkey: "Del / Backspace" },
-  { name: "Next row", description: "Jump to row start above", hotkey: "Enter" },
-  { name: "Move cursor", description: "Move current cursor", hotkey: "Arrow keys" },
-  { name: "Select box", description: "Make selection rectangle", hotkey: "Shift + arrows" },
-  { name: "Capture motif", description: "Store selected motif", hotkey: "T" },
-  { name: "Set destination", description: "Store selected destination", hotkey: "D" },
-  { name: "Tile across", description: "Fill leftward", hotkey: "Button" },
-  { name: "Tile up", description: "Fill upward", hotkey: "Button" },
-  { name: "Tile destination", description: "Fill destination box", hotkey: "Button" },
-];
-
 export default function WorkspacePage() {
   const { state, dispatch, canUndo, canRedo } = useWorkspace();
   const navigate = useNavigate();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
+
+  const hotkeys = loadHotkeyBindings();
 
   useEffect(() => {
     gridWrapRef.current?.focus();
@@ -141,6 +127,23 @@ export default function WorkspacePage() {
       strategy: usePartial ? "partial" : "truncate",
     });
   };
+
+  const infoRows = [
+    { name: "Undo", description: "Step backward", hotkey: hotkeys.undo },
+    { name: "Redo", description: "Step forward", hotkey: hotkeys.redo },
+    { name: "Add cells", description: "Add shape cells", hotkey: "Left-drag" },
+    { name: "Remove cells", description: "Remove shape cells", hotkey: "Right-drag" },
+    { name: "Paint", description: "Paint and advance", hotkey: "0–5 / Num 0–5" },
+    { name: "Erase", description: "Back up and clear", hotkey: "Del / Backspace" },
+    { name: "Next row", description: "Jump to row start above", hotkey: hotkeys.nextRow },
+    { name: "Move cursor", description: "Move current cursor", hotkey: "Arrow keys" },
+    { name: "Select box", description: "Make selection rectangle", hotkey: "Shift + arrows" },
+    { name: "Capture motif", description: "Store selected motif", hotkey: hotkeys.captureMotif },
+    { name: "Set destination", description: "Store selected destination", hotkey: hotkeys.setDestination },
+    { name: "Tile across", description: "Fill leftward", hotkey: "Button" },
+    { name: "Tile up", description: "Fill upward", hotkey: "Button" },
+    { name: "Tile destination", description: "Fill destination box", hotkey: "Button" },
+  ];
 
   return (
     <main style={{ display: "grid", gap: 16 }}>
@@ -296,19 +299,17 @@ export default function WorkspacePage() {
           gridWrapRef.current?.focus();
         }}
         onKeyDown={(event) => {
-          if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "z") {
+          const hotkey = eventToHotkey(event);
+
+          if (hotkey === hotkeys.undo) {
             event.preventDefault();
-            if (canUndo) {
-              dispatch({ type: "UNDO" });
-            }
+            if (canUndo) dispatch({ type: "UNDO" });
             return;
           }
 
-          if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "y") {
+          if (hotkey === hotkeys.redo) {
             event.preventDefault();
-            if (canRedo) {
-              dispatch({ type: "REDO" });
-            }
+            if (canRedo) dispatch({ type: "REDO" });
             return;
           }
 
@@ -318,7 +319,7 @@ export default function WorkspacePage() {
             !!symbol ||
             event.key === "Backspace" ||
             event.key === "Delete" ||
-            event.key === "Enter";
+            hotkey === hotkeys.nextRow;
 
           if (shouldExitMirrorMode && (state.mirrorX || state.mirrorY)) {
             dispatch({ type: "CLEAR_MIRRORS" });
@@ -348,13 +349,13 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (event.key === "t" || event.key === "T") {
+          if (hotkey === hotkeys.captureMotif) {
             event.preventDefault();
             dispatch({ type: "CAPTURE_MOTIF" });
             return;
           }
 
-          if (event.key === "d" || event.key === "D") {
+          if (hotkey === hotkeys.setDestination) {
             event.preventDefault();
             dispatch({ type: "SET_DESTINATION_FROM_SELECTION" });
             return;
@@ -396,7 +397,7 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (event.key === "Enter") {
+          if (hotkey === hotkeys.nextRow) {
             event.preventDefault();
             dispatch({ type: "NEXT_ROW_START" });
           }

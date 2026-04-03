@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useWorkspace } from "../../features/workspace/state/WorkspaceContext";
 import { readProjectFile, saveProjectAs } from "../../features/project/storage";
+import HotkeyEditorModal from "../../features/workspace/components/HotkeyEditorModal";
 
 type MenuKey = "file" | "edit" | "languages" | "info" | null;
 type LanguageKey = "English" | "German" | "French";
@@ -12,6 +13,7 @@ export default function AppShell() {
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const [language, setLanguage] = useState<LanguageKey>("English");
+  const [showHotkeyEditor, setShowHotkeyEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const title = useMemo(() => {
@@ -173,8 +175,8 @@ export default function AppShell() {
                   type="button"
                   style={menuItemStyle}
                   onClick={() => {
-                    window.alert("Hotkey editor is not wired yet.");
                     closeMenus();
+                    setShowHotkeyEditor(true);
                   }}
                 >
                   Hotkeys
@@ -243,7 +245,7 @@ export default function AppShell() {
                   style={menuItemStyle}
                   onClick={() => {
                     window.alert(
-                      "KnitGrid\nDevelopment build\nWorkspace and tiling are in active development."
+                      "KnitGrid\nDevelopment build\nWorkspace, Pattern Zone, and tiling are in active development."
                     );
                     closeMenus();
                   }}
@@ -278,6 +280,10 @@ export default function AppShell() {
         onChange={handleFileChange}
         style={{ display: "none" }}
       />
+
+      {showHotkeyEditor && (
+        <HotkeyEditorModal onClose={() => setShowHotkeyEditor(false)} />
+      )}
 
       <div style={{ padding: 12 }}>
         <Outlet />
