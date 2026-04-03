@@ -1,21 +1,9 @@
+import { useNavigate } from "react-router-dom";
+import { patternListings } from "../features/patternZone/patterns";
+
 export default function HomePage() {
-  const cards = [
-    {
-      title: "Nordic Snowline",
-      price: "$8",
-      description: "Graphic winter colorwork pattern with bold repeats.",
-    },
-    {
-      title: "Mountain Fade Mittens",
-      price: "$6",
-      description: "Compact motif set for mitten and cuff projects.",
-    },
-    {
-      title: "Forest Trail Yoke",
-      price: "$10",
-      description: "Round-yoke sweater chart with repeating woodland bands.",
-    },
-  ];
+  const navigate = useNavigate();
+  const highlights = patternListings.filter((pattern) => pattern.featured).slice(0, 3);
 
   return (
     <main
@@ -57,19 +45,36 @@ export default function HomePage() {
             Browse patterns for sale, or use <strong>File → New</strong> to start a pattern yourself.
           </p>
 
-          <div
-            style={{
-              marginTop: 8,
-              display: "inline-block",
-              width: "fit-content",
-              padding: "10px 14px",
-              borderRadius: 8,
-              background: "#1d4ed8",
-              color: "#eff6ff",
-              fontWeight: 600,
-            }}
-          >
-            Start here! See Info → Tutorial Info
+          <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
+            <button
+              type="button"
+              onClick={() => navigate("/patterns")}
+              style={{
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#1d4ed8",
+                color: "#eff6ff",
+                fontWeight: 600,
+                border: "none",
+                cursor: "pointer",
+              }}
+            >
+              Browse Pattern Zone
+            </button>
+
+            <div
+              style={{
+                display: "inline-block",
+                width: "fit-content",
+                padding: "10px 14px",
+                borderRadius: 8,
+                background: "#1f2937",
+                color: "#e5e7eb",
+                fontWeight: 600,
+              }}
+            >
+              Start here! See Info → Tutorial Info
+            </div>
           </div>
         </div>
       </section>
@@ -92,9 +97,10 @@ export default function HomePage() {
             gap: 16,
           }}
         >
-          {cards.map((card) => (
+          {highlights.map((pattern) => (
             <article
-              key={card.title}
+              key={pattern.id}
+              onClick={() => navigate("/patterns")}
               style={{
                 padding: 18,
                 borderRadius: 12,
@@ -102,6 +108,7 @@ export default function HomePage() {
                 background: "#111827",
                 display: "grid",
                 gap: 8,
+                cursor: "pointer",
               }}
             >
               <div
@@ -122,14 +129,14 @@ export default function HomePage() {
                 }}
               >
                 <h3 style={{ margin: 0, color: "#f8fafc", fontSize: 18 }}>
-                  {card.title}
+                  {pattern.title}
                 </h3>
                 <span style={{ color: "#93c5fd", fontWeight: 700 }}>
-                  {card.price}
+                  ${pattern.price}
                 </span>
               </div>
               <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14 }}>
-                {card.description}
+                {pattern.description}
               </p>
             </article>
           ))}

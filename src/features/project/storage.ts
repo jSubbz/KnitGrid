@@ -166,6 +166,10 @@ export function parseProjectJson(text: string): KnitProject {
         isObject(raw.yarn) && typeof raw.yarn.yarnDescriptors === "string"
           ? raw.yarn.yarnDescriptors
           : "",
+      patternTags:
+        isObject(raw.yarn) && typeof raw.yarn.patternTags === "string"
+          ? raw.yarn.patternTags
+          : "",
     },
     shapeMask: normalizeBooleanMatrix(raw.shapeMask, rows, cols, true),
     pattern: normalizePatternMatrix(raw.pattern, rows, cols),

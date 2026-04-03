@@ -64,6 +64,21 @@ export default function CreatePatternPage() {
         />
       </label>
 
+      <label style={{ display: "grid", gap: 6 }}>
+        <span>Pattern tags</span>
+        <input
+          value={state.yarn.patternTags}
+          placeholder="colorwork, socks, winter"
+          onChange={(e) =>
+            dispatch({
+              type: "SET_YARN_FIELD",
+              field: "patternTags",
+              value: e.target.value,
+            })
+          }
+        />
+      </label>
+
       <div style={{ display: "flex", gap: 12 }}>
         <button
           type="button"
@@ -80,6 +95,7 @@ export default function CreatePatternPage() {
       </div>
 
       <p>Current mode: {state.knitMode}</p>
+      <p>Tags: {state.yarn.patternTags || "none"}</p>
 
       <div style={{ display: "flex", gap: 12 }}>
         <Link to="/">Back</Link>
