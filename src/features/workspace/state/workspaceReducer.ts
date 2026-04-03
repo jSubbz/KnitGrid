@@ -32,8 +32,11 @@ export type WorkspaceAction =
   | { type: "CLEAR_SELECTION" }
   | { type: "EXTEND_SELECTION"; dir: "left" | "right" | "up" | "down" }
   | { type: "CAPTURE_MOTIF" }
+  | { type: "SET_DESTINATION_FROM_SELECTION" }
+  | { type: "CLEAR_DESTINATION" }
   | { type: "TILE_ACROSS"; strategy: "partial" | "truncate" }
-  | { type: "TILE_UP"; strategy: "partial" | "truncate" };
+  | { type: "TILE_UP"; strategy: "partial" | "truncate" }
+  | { type: "TILE_DESTINATION"; strategy: "partial" | "truncate" };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -127,6 +130,10 @@ function resizeProject(state: KnitProject, nextRows: number, nextCols: number): 
       anchor: null,
       focus: null,
       rect: null,
+    },
+    tileApply: {
+      ...state.tileApply,
+      destRect: null,
     },
   };
 }
@@ -401,8 +408,45 @@ export function workspaceReducer(
           tileCols: rect.maxC - rect.minC + 1,
           confirmed: true,
         },
+        selection: {
+          ...state.selection,
+          active: false,
+          anchor: null,
+          focus: null,
+          rect: null,
+        },
       };
     }
+
+    case "SET_DESTINATION_FROM_SELECTION": {
+      if (!state.selection.rect) {
+        return state;
+      }
+
+      return {
+        ...state,
+        tileApply: {
+          ...state.tileApply,
+          destRect: { ...state.selection.rect },
+        },
+        selection: {
+          ...state.selection,
+          active: false,
+          anchor: null,
+          focus: null,
+          rect: null,
+        },
+      };
+    }
+
+    case "CLEAR_DESTINATION":
+      return {
+        ...state,
+        tileApply: {
+          ...state.tileApply,
+          destRect: null,
+        },
+      };
 
     case "TILE_ACROSS": {
       if (!state.tileSource.confirmed) {
@@ -496,6 +540,72 @@ export function workspaceReducer(
             }
 
             nextPattern[destR][destC] = { ...source[rr][cc] };
+          }
+        }
+      }
+
+      return {
+        ...state,
+        pattern: nextPattern,
+      };
+    }
+
+    case "TILE_DESTINATION": {
+      if (!state.tileSource.confirmed || !state.tileApply.destRect) {
+        return state;
+      }
+
+      const { originR, originC, tileRows, tileCols } = state.tileSource;
+      const dest = state.tileApply.destRect;
+      const nextPattern = clonePattern(state.pattern);
+
+      const source: PatternCell[][] = [];
+
+      for (let rr = 0; rr < tileRows; rr += 1) {
+        const row: PatternCell[] = [];
+        for (let cc = 0; cc < tileCols; cc += 1) {
+          const srcR = originR + rr;
+          const srcC = originC + cc;
+          row.push({ ...state.pattern[srcR][srcC] });
+        }
+        source.push(row);
+      }
+
+      for (let baseR = dest.minR; baseR <= dest.maxR; baseR += tileRows) {
+        for (let baseC = dest.minC; baseC <= dest.maxC; baseC += tileCols) {
+          const wouldOverflowBottom = baseR + tileRows - 1 > dest.maxR;
+          const wouldOverflowRight = baseC + tileCols - 1 > dest.maxC;
+
+          if (
+            action.strategy === "truncate" &&
+            (wouldOverflowBottom || wouldOverflowRight)
+          ) {
+            continue;
+          }
+
+          for (let rr = 0; rr < tileRows; rr += 1) {
+            for (let cc = 0; cc < tileCols; cc += 1) {
+              const destR = baseR + rr;
+              const destC = baseC + cc;
+
+              if (destR < dest.minR || destR > dest.maxR) {
+                continue;
+              }
+
+              if (destC < dest.minC || destC > dest.maxC) {
+                continue;
+              }
+
+              if (destR < 0 || destR >= state.rows || destC < 0 || destC >= state.cols) {
+                continue;
+              }
+
+              if (!state.shapeMask[destR][destC]) {
+                continue;
+              }
+
+              nextPattern[destR][destC] = { ...source[rr][cc] };
+            }
           }
         }
       }

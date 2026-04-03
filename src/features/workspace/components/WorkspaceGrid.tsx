@@ -63,6 +63,14 @@ export default function WorkspaceGrid() {
         c >= state.tileSource.originC &&
         c < state.tileSource.originC + state.tileSource.tileCols;
 
+      const dest = state.tileApply.destRect;
+      const inDestination =
+        !!dest &&
+        r >= dest.minR &&
+        r <= dest.maxR &&
+        c >= dest.minC &&
+        c <= dest.maxC;
+
       cells.push(
         <div
           key={`${r}-${c}`}
@@ -105,17 +113,21 @@ export default function WorkspaceGrid() {
               ? "#dbeafe"
               : isSelected
                 ? "#bfdbfe"
-                : inCapturedMotif
-                  ? "#d1fae5"
-                  : inShape
-                    ? "#ffffff"
-                    : "#e5e7eb",
+                : inDestination
+                  ? "#fed7aa"
+                  : inCapturedMotif
+                    ? "#d1fae5"
+                    : inShape
+                      ? "#ffffff"
+                      : "#e5e7eb",
             color: "#111827",
             outline: isCursor
               ? "2px solid #2563eb"
               : inCapturedMotif
                 ? "2px solid #10b981"
-                : "none",
+                : inDestination
+                  ? "2px solid #f97316"
+                  : "none",
             outlineOffset: "-2px",
             userSelect: "none",
             cursor: "crosshair",

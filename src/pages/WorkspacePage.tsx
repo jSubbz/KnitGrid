@@ -41,6 +41,21 @@ function keyToSymbol(event: React.KeyboardEvent<HTMLDivElement>): PatternSymbol 
   }
 }
 
+const infoRows = [
+  { name: "Add cells", description: "Add shape cells", hotkey: "Left-drag" },
+  { name: "Remove cells", description: "Remove shape cells", hotkey: "Right-drag" },
+  { name: "Paint", description: "Paint and advance", hotkey: "0–5 / Num 0–5" },
+  { name: "Erase", description: "Back up and clear", hotkey: "Del / Backspace" },
+  { name: "Next row", description: "Jump to row start above", hotkey: "Enter" },
+  { name: "Move cursor", description: "Move current cursor", hotkey: "Arrow keys" },
+  { name: "Select box", description: "Make selection rectangle", hotkey: "Shift + arrows" },
+  { name: "Capture motif", description: "Store selected motif", hotkey: "T" },
+  { name: "Set destination", description: "Store selected destination", hotkey: "D" },
+  { name: "Tile across", description: "Fill leftward", hotkey: "Button" },
+  { name: "Tile up", description: "Fill upward", hotkey: "Button" },
+  { name: "Tile destination", description: "Fill destination box", hotkey: "Button" },
+];
+
 export default function WorkspacePage() {
   const { state, dispatch, canUndo, canRedo } = useWorkspace();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
@@ -95,6 +110,34 @@ export default function WorkspacePage() {
     });
   };
 
+  const handleTileDestination = () => {
+    if (!state.tileSource.confirmed || !state.tileApply.destRect) {
+      return;
+    }
+
+    const destRows =
+      state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1;
+    const destCols =
+      state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1;
+
+    const rowRemainder = destRows % state.tileSource.tileRows;
+    const colRemainder = destCols % state.tileSource.tileCols;
+
+    if (rowRemainder === 0 && colRemainder === 0) {
+      dispatch({ type: "TILE_DESTINATION", strategy: "partial" });
+      return;
+    }
+
+    const usePartial = window.confirm(
+      "Destination box is not an exact multiple of the motif size.\n\nPress OK for partial fill.\nPress Cancel for truncate."
+    );
+
+    dispatch({
+      type: "TILE_DESTINATION",
+      strategy: usePartial ? "partial" : "truncate",
+    });
+  };
+
   return (
     <main style={{ padding: 24, display: "grid", gap: 16 }}>
       <h1>Workspace</h1>
@@ -133,6 +176,12 @@ export default function WorkspacePage() {
         <button type="button" onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}>
           Capture Motif
         </button>
+        <button type="button" onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}>
+          Set Destination
+        </button>
+        <button type="button" onClick={() => dispatch({ type: "CLEAR_DESTINATION" })}>
+          Clear Destination
+        </button>
         <button
           type="button"
           onClick={handleTileAcross}
@@ -147,6 +196,13 @@ export default function WorkspacePage() {
         >
           Tile Up
         </button>
+        <button
+          type="button"
+          onClick={handleTileDestination}
+          disabled={!state.tileSource.confirmed || !state.tileApply.destRect}
+        >
+          Tile Destination
+        </button>
       </div>
 
       <p>
@@ -160,6 +216,14 @@ export default function WorkspacePage() {
         {state.tileSource.confirmed
           ? `${state.tileSource.tileCols} × ${state.tileSource.tileRows} captured`
           : "not captured"}
+      </p>
+      <p>
+        Destination:{" "}
+        {state.tileApply.destRect
+          ? `${state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1} × ${
+              state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1
+            } set`
+          : "not set"}
       </p>
 
       <div
@@ -211,6 +275,12 @@ export default function WorkspacePage() {
             return;
           }
 
+          if (event.key === "d" || event.key === "D") {
+            event.preventDefault();
+            dispatch({ type: "SET_DESTINATION_FROM_SELECTION" });
+            return;
+          }
+
           if (symbol) {
             event.preventDefault();
             dispatch({ type: "PAINT_AND_ADVANCE", symbol });
@@ -254,27 +324,64 @@ export default function WorkspacePage() {
         }}
         style={{
           width: "fit-content",
-          border: "1px solid #d1d5db",
+          border: "1px solid #374151",
           padding: 12,
           borderRadius: 8,
-          background: "#f9fafb",
+          background: "#111827",
           outline: "none",
         }}
       >
         <WorkspaceGrid />
       </div>
 
-      <div style={{ display: "grid", gap: 4 }}>
-        <p>Left-drag adds cells back into the shape.</p>
-        <p>Right-drag removes cells from the shape.</p>
-        <p>0–5 and numpad 0–5 paint and advance.</p>
-        <p>Delete/Backspace moves back and clears.</p>
-        <p>Enter jumps to the next row start.</p>
-        <p>Shift + arrows selects a motif rectangle.</p>
-        <p>T captures the selected motif.</p>
-        <p>Tile Across fills leftward from the captured motif.</p>
-        <p>Tile Up fills upward from the captured motif.</p>
-      </div>
+      <section
+        style={{
+          border: "1px solid #374151",
+          borderRadius: 8,
+          overflow: "hidden",
+          background: "#111827",
+          color: "#e5e7eb",
+          maxWidth: 960,
+          fontSize: 14,
+        }}
+      >
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "170px 1fr 170px",
+            background: "#1f2937",
+            fontWeight: 600,
+            borderBottom: "1px solid #374151",
+          }}
+        >
+          <div style={{ padding: "8px 10px" }}>Action</div>
+          <div style={{ padding: "8px 10px" }}>Description</div>
+          <div style={{ padding: "8px 10px" }}>Hotkey</div>
+        </div>
+
+        {infoRows.map((row, index) => (
+          <div
+            key={row.name}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "170px 1fr 170px",
+              borderBottom: index === infoRows.length - 1 ? "none" : "1px solid #1f2937",
+              textAlign: "left",
+              whiteSpace: "nowrap",
+            }}
+          >
+            <div style={{ padding: "8px 10px", color: "#f9fafb", fontWeight: 500 }}>
+              {row.name}
+            </div>
+            <div style={{ padding: "8px 10px", color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {row.description}
+            </div>
+            <div style={{ padding: "8px 10px", fontFamily: "monospace", color: "#93c5fd" }}>
+              {row.hotkey}
+            </div>
+          </div>
+        ))}
+      </section>
     </main>
   );
 }
