@@ -32,7 +32,8 @@ export type WorkspaceAction =
   | { type: "CLEAR_SELECTION" }
   | { type: "EXTEND_SELECTION"; dir: "left" | "right" | "up" | "down" }
   | { type: "CAPTURE_MOTIF" }
-  | { type: "TILE_ACROSS"; strategy: "partial" | "truncate" };
+  | { type: "TILE_ACROSS"; strategy: "partial" | "truncate" }
+  | { type: "TILE_UP"; strategy: "partial" | "truncate" };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, value));
@@ -434,6 +435,57 @@ export function workspaceReducer(
           for (let cc = 0; cc < tileCols; cc += 1) {
             const destR = originR + rr;
             const destC = baseC + cc;
+
+            if (destR < 0 || destR >= state.rows || destC < 0 || destC >= state.cols) {
+              continue;
+            }
+
+            if (!state.shapeMask[destR][destC]) {
+              continue;
+            }
+
+            nextPattern[destR][destC] = { ...source[rr][cc] };
+          }
+        }
+      }
+
+      return {
+        ...state,
+        pattern: nextPattern,
+      };
+    }
+
+    case "TILE_UP": {
+      if (!state.tileSource.confirmed) {
+        return state;
+      }
+
+      const { originR, originC, tileRows, tileCols } = state.tileSource;
+      const nextPattern = clonePattern(state.pattern);
+
+      const source: PatternCell[][] = [];
+
+      for (let rr = 0; rr < tileRows; rr += 1) {
+        const row: PatternCell[] = [];
+        for (let cc = 0; cc < tileCols; cc += 1) {
+          const srcR = originR + rr;
+          const srcC = originC + cc;
+          row.push({ ...state.pattern[srcR][srcC] });
+        }
+        source.push(row);
+      }
+
+      for (let baseR = originR; baseR > -tileRows; baseR -= tileRows) {
+        const wouldOverflowTop = baseR < 0;
+
+        if (action.strategy === "truncate" && wouldOverflowTop) {
+          continue;
+        }
+
+        for (let rr = 0; rr < tileRows; rr += 1) {
+          for (let cc = 0; cc < tileCols; cc += 1) {
+            const destR = baseR + rr;
+            const destC = originC + cc;
 
             if (destR < 0 || destR >= state.rows || destC < 0 || destC >= state.cols) {
               continue;

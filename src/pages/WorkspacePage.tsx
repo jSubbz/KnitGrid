@@ -72,6 +72,29 @@ export default function WorkspacePage() {
     });
   };
 
+  const handleTileUp = () => {
+    if (!state.tileSource.confirmed) {
+      return;
+    }
+
+    const heightToTop = state.tileSource.originR + state.tileSource.tileRows;
+    const remainder = heightToTop % state.tileSource.tileRows;
+
+    if (remainder === 0) {
+      dispatch({ type: "TILE_UP", strategy: "partial" });
+      return;
+    }
+
+    const usePartial = window.confirm(
+      "Tile height is not an exact multiple of the motif height.\n\nPress OK for partial fill.\nPress Cancel for truncate."
+    );
+
+    dispatch({
+      type: "TILE_UP",
+      strategy: usePartial ? "partial" : "truncate",
+    });
+  };
+
   return (
     <main style={{ padding: 24, display: "grid", gap: 16 }}>
       <h1>Workspace</h1>
@@ -116,6 +139,13 @@ export default function WorkspacePage() {
           disabled={!state.tileSource.confirmed}
         >
           Tile Across
+        </button>
+        <button
+          type="button"
+          onClick={handleTileUp}
+          disabled={!state.tileSource.confirmed}
+        >
+          Tile Up
         </button>
       </div>
 
@@ -243,6 +273,7 @@ export default function WorkspacePage() {
         <p>Shift + arrows selects a motif rectangle.</p>
         <p>T captures the selected motif.</p>
         <p>Tile Across fills leftward from the captured motif.</p>
+        <p>Tile Up fills upward from the captured motif.</p>
       </div>
     </main>
   );
