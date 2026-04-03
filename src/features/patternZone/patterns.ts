@@ -1,3 +1,6 @@
+import { createEmptyProject } from "../project/projectFactory";
+import type { KnitProject, PatternSymbol } from "../project/types";
+
 export interface PatternListing {
   id: string;
   title: string;
@@ -101,3 +104,134 @@ export const patternListings: PatternListing[] = [
     description: "Leaf-based cowl chart with mirrored motif structure.",
   },
 ];
+
+function paintCell(
+  project: KnitProject,
+  r: number,
+  c: number,
+  symbol: PatternSymbol
+) {
+  if (r < 0 || r >= project.rows || c < 0 || c >= project.cols) return;
+  project.pattern[r][c] = { symbol };
+}
+
+function paintMatrix(
+  project: KnitProject,
+  startRow: number,
+  startCol: number,
+  matrix: PatternSymbol[][]
+) {
+  for (let r = 0; r < matrix.length; r += 1) {
+    for (let c = 0; c < matrix[r].length; c += 1) {
+      paintCell(project, startRow + r, startCol + c, matrix[r][c]);
+    }
+  }
+}
+
+function motifForPattern(id: string): PatternSymbol[][] {
+  switch (id) {
+    case "nordic-snowline":
+      return [
+        ["dot", "empty", "dot", "empty"],
+        ["empty", "dot", "empty", "dot"],
+        ["dot", "h", "dot", "h"],
+        ["empty", "dot", "empty", "dot"],
+      ];
+
+    case "mountain-fade-mittens":
+      return [
+        ["diagFwd", "empty", "diagBack", "empty"],
+        ["empty", "dot", "empty", "dot"],
+        ["diagBack", "empty", "diagFwd", "empty"],
+        ["empty", "dot", "empty", "dot"],
+      ];
+
+    case "forest-trail-yoke":
+      return [
+        ["dot", "v", "dot", "v"],
+        ["diagFwd", "dot", "diagBack", "dot"],
+        ["dot", "h", "dot", "h"],
+        ["diagBack", "dot", "diagFwd", "dot"],
+      ];
+
+    case "harbor-check-beanie":
+      return [
+        ["dot", "dot", "empty", "empty"],
+        ["dot", "dot", "empty", "empty"],
+        ["empty", "empty", "dot", "dot"],
+        ["empty", "empty", "dot", "dot"],
+      ];
+
+    case "ember-cuff-chart":
+      return [
+        ["dot", "empty", "dot", "empty"],
+        ["h", "dot", "h", "dot"],
+        ["dot", "empty", "dot", "empty"],
+        ["h", "dot", "h", "dot"],
+      ];
+
+    case "fjord-band-pullover":
+      return [
+        ["h", "dot", "h", "dot"],
+        ["dot", "empty", "dot", "empty"],
+        ["h", "dot", "h", "dot"],
+        ["dot", "empty", "dot", "empty"],
+      ];
+
+    case "heather-grid-socks":
+      return [
+        ["v", "empty", "v", "empty"],
+        ["empty", "dot", "empty", "dot"],
+        ["v", "empty", "v", "empty"],
+        ["empty", "dot", "empty", "dot"],
+      ];
+
+    case "oak-leaf-cowl":
+      return [
+        ["empty", "dot", "dot", "empty"],
+        ["dot", "diagFwd", "diagBack", "dot"],
+        ["dot", "h", "h", "dot"],
+        ["empty", "dot", "dot", "empty"],
+      ];
+
+    default:
+      return [
+        ["dot", "empty", "dot", "empty"],
+        ["empty", "dot", "empty", "dot"],
+        ["dot", "empty", "dot", "empty"],
+        ["empty", "dot", "empty", "dot"],
+      ];
+  }
+}
+
+export function buildProjectFromPattern(pattern: PatternListing): KnitProject {
+  const project = createEmptyProject(24, 24);
+
+  project.yarn.yarnName = pattern.title;
+  project.yarn.yarnDescriptors = pattern.designer;
+  project.yarn.patternTags = pattern.tags.join(", ");
+  project.confirmedShape = true;
+
+  const motif = motifForPattern(pattern.id);
+  const motifRows = motif.length;
+  const motifCols = motif[0]?.length ?? 0;
+
+  const startRow = project.rows - motifRows;
+  const startCol = project.cols - motifCols;
+
+  paintMatrix(project, startRow, startCol, motif);
+
+  project.cursor = { r: startRow, c: startCol };
+  project.selectedRow = startRow;
+
+  project.tileSource = {
+    ...project.tileSource,
+    originR: startRow,
+    originC: startCol,
+    tileRows: motifRows,
+    tileCols: motifCols,
+    confirmed: true,
+  };
+
+  return project;
+}

@@ -53,6 +53,7 @@ export interface YarnDetails {
   rowsPerInch: string;
   yarnName: string;
   yarnDescriptors: string;
+  patternTags: string;
 }
 
 export interface KnitProject {

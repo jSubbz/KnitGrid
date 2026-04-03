@@ -23,6 +23,7 @@ export function createEmptyProject(rows = 40, cols = 40): KnitProject {
       rowsPerInch: "",
       yarnName: "",
       yarnDescriptors: "",
+      patternTags: "",
     },
     shapeMask: createShapeMask(rows, cols, true),
     pattern: createPattern(rows, cols),

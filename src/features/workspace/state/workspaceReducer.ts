@@ -10,7 +10,8 @@ export type YarnField =
   | "stitchesPerInch"
   | "rowsPerInch"
   | "yarnName"
-  | "yarnDescriptors";
+  | "yarnDescriptors"
+  | "patternTags";
 
 export type WorkspaceAction =
   | { type: "SET_YARN_FIELD"; field: YarnField; value: string }
