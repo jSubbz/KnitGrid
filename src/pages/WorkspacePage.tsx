@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import type { PatternSymbol } from "../features/project/types";
@@ -42,6 +43,8 @@ function keyToSymbol(event: React.KeyboardEvent<HTMLDivElement>): PatternSymbol 
 }
 
 const infoRows = [
+  { name: "Undo", description: "Step backward", hotkey: "Ctrl+Z" },
+  { name: "Redo", description: "Step forward", hotkey: "Ctrl+Y" },
   { name: "Add cells", description: "Add shape cells", hotkey: "Left-drag" },
   { name: "Remove cells", description: "Remove shape cells", hotkey: "Right-drag" },
   { name: "Paint", description: "Paint and advance", hotkey: "0–5 / Num 0–5" },
@@ -58,6 +61,7 @@ const infoRows = [
 
 export default function WorkspacePage() {
   const { state, dispatch, canUndo, canRedo } = useWorkspace();
+  const navigate = useNavigate();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -139,92 +143,151 @@ export default function WorkspacePage() {
   };
 
   return (
-    <main style={{ padding: 24, display: "grid", gap: 16 }}>
-      <h1>Workspace</h1>
-
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={!canUndo}>
-          Undo
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={!canRedo}>
-          Redo
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_X" })}>
-          Mirror X: {state.mirrorX ? "On" : "Off"}
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_Y" })}>
-          Mirror Y: {state.mirrorY ? "On" : "Off"}
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "ADD_COL" })}>
-          + Col
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "REMOVE_COL" })}>
-          - Col
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "ADD_ROW" })}>
-          + Row
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "REMOVE_ROW" })}>
-          - Row
+    <main style={{ display: "grid", gap: 16 }}>
+      <div style={{ display: "flex", justifyContent: "center" }}>
+        <button type="button" onClick={() => navigate("/")}>
+          Home
         </button>
       </div>
 
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-        <button type="button" onClick={() => dispatch({ type: "CLEAR_SELECTION" })}>
-          Clear Selection
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}>
-          Capture Motif
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}>
-          Set Destination
-        </button>
-        <button type="button" onClick={() => dispatch({ type: "CLEAR_DESTINATION" })}>
-          Clear Destination
-        </button>
-        <button
-          type="button"
-          onClick={handleTileAcross}
-          disabled={!state.tileSource.confirmed}
-        >
-          Tile Across
-        </button>
-        <button
-          type="button"
-          onClick={handleTileUp}
-          disabled={!state.tileSource.confirmed}
-        >
-          Tile Up
-        </button>
-        <button
-          type="button"
-          onClick={handleTileDestination}
-          disabled={!state.tileSource.confirmed || !state.tileApply.destRect}
-        >
-          Tile Destination
-        </button>
-      </div>
+      <section
+        style={{
+          display: "grid",
+          gridTemplateColumns: "minmax(0, 1fr) 320px",
+          gap: 16,
+          alignItems: "start",
+        }}
+      >
+        <div style={{ display: "grid", gap: 12, justifyItems: "start" }}>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={!canUndo}>
+              Undo
+            </button>
+            <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={!canRedo}>
+              Redo
+            </button>
+          </div>
 
-      <p>
-        Grid: {state.cols} × {state.rows}
-      </p>
-      <p>
-        Cursor display position: row {state.rows - state.cursor.r}, col {state.cols - state.cursor.c}
-      </p>
-      <p>
-        Motif:{" "}
-        {state.tileSource.confirmed
-          ? `${state.tileSource.tileCols} × ${state.tileSource.tileRows} captured`
-          : "not captured"}
-      </p>
-      <p>
-        Destination:{" "}
-        {state.tileApply.destRect
-          ? `${state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1} × ${
-              state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1
-            } set`
-          : "not set"}
-      </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_X" })}>
+              Mirror X: {state.mirrorX ? "On" : "Off"}
+            </button>
+            <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_Y" })}>
+              Mirror Y: {state.mirrorY ? "On" : "Off"}
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+            <button type="button" onClick={() => dispatch({ type: "ADD_COL" })}>
+              + Col
+            </button>
+            <button type="button" onClick={() => dispatch({ type: "REMOVE_COL" })}>
+              - Col
+            </button>
+            <button type="button" onClick={() => dispatch({ type: "ADD_ROW" })}>
+              + Row
+            </button>
+            <button type="button" onClick={() => dispatch({ type: "REMOVE_ROW" })}>
+              - Row
+            </button>
+          </div>
+
+          <div
+            style={{
+              display: "grid",
+              gap: 8,
+              padding: 10,
+              border: "1px solid #374151",
+              borderRadius: 10,
+              background: "#111827",
+            }}
+          >
+            <div style={{ fontWeight: 700, color: "#f9fafb" }}>Motif tools</div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button type="button" onClick={() => dispatch({ type: "CLEAR_SELECTION" })}>
+                Clear Selection
+              </button>
+              <button type="button" onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}>
+                Capture Motif
+              </button>
+              <button type="button" onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}>
+                Set Destination
+              </button>
+              <button type="button" onClick={() => dispatch({ type: "CLEAR_DESTINATION" })}>
+                Clear Destination
+              </button>
+            </div>
+
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+              <button
+                type="button"
+                onClick={handleTileAcross}
+                disabled={!state.tileSource.confirmed}
+              >
+                Tile Across
+              </button>
+              <button
+                type="button"
+                onClick={handleTileUp}
+                disabled={!state.tileSource.confirmed}
+              >
+                Tile Up
+              </button>
+              <button
+                type="button"
+                onClick={handleTileDestination}
+                disabled={!state.tileSource.confirmed || !state.tileApply.destRect}
+              >
+                Tile Destination
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <aside
+          style={{
+            border: "1px solid #374151",
+            borderRadius: 10,
+            background: "#111827",
+            color: "#e5e7eb",
+            padding: 14,
+            display: "grid",
+            gap: 10,
+          }}
+        >
+          <div style={{ fontWeight: 700, color: "#f9fafb" }}>Status</div>
+
+          <div style={{ display: "grid", gap: 4 }}>
+            <div>
+              <strong>Grid:</strong> {state.cols} × {state.rows}
+            </div>
+            <div>
+              <strong>Cursor:</strong> row {state.rows - state.cursor.r}, col {state.cols - state.cursor.c}
+            </div>
+            <div>
+              <strong>Motif:</strong>{" "}
+              {state.tileSource.confirmed
+                ? `${state.tileSource.tileCols} × ${state.tileSource.tileRows} captured`
+                : "not captured"}
+            </div>
+            <div>
+              <strong>Destination:</strong>{" "}
+              {state.tileApply.destRect
+                ? `${state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1} × ${
+                    state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1
+                  } set`
+                : "not set"}
+            </div>
+            <div>
+              <strong>Mirror X:</strong> {state.mirrorX ? "On" : "Off"}
+            </div>
+            <div>
+              <strong>Mirror Y:</strong> {state.mirrorY ? "On" : "Off"}
+            </div>
+          </div>
+        </aside>
+      </section>
 
       <div
         ref={gridWrapRef}
@@ -233,6 +296,22 @@ export default function WorkspacePage() {
           gridWrapRef.current?.focus();
         }}
         onKeyDown={(event) => {
+          if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "z") {
+            event.preventDefault();
+            if (canUndo) {
+              dispatch({ type: "UNDO" });
+            }
+            return;
+          }
+
+          if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "y") {
+            event.preventDefault();
+            if (canRedo) {
+              dispatch({ type: "REDO" });
+            }
+            return;
+          }
+
           const symbol = keyToSymbol(event);
 
           const shouldExitMirrorMode =
