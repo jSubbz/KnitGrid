@@ -1,11 +1,12 @@
 # KnitGrid
 
-A knitting chart editor where the shape comes from the stitches.
+A knitting chart editor. It counts your stitches, and flags the rows that
+don't add up.
 
 You cast on, type a row, and the next row is worked out from what that row
-produced. Increases widen the chart, decreases narrow it. Nothing is drawn in
-advance — the outline of the piece is a consequence of the knitting, the same
-way it is on the needles.
+produced. Increases widen the chart, decreases narrow it. There is no grid to
+set up first, because the outline of the piece comes out of the knitting, the
+same way it does on the needles.
 
 ![The KnitGrid workspace: a chart worked upward from an eight-stitch cast-on, with paired edge increases, a decrease row, and the row in progress showing what it still owes.](docs/workspace.png)
 
