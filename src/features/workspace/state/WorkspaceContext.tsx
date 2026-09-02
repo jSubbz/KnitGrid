@@ -1,12 +1,16 @@
 import {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useMemo,
   useReducer,
+  useRef,
   type Dispatch,
   type ReactNode,
 } from "react";
 import { createProject } from "../../project/projectFactory";
+import { logAction } from "../../devlog/devlog";
 import type { KnitProject } from "../../project/types";
 import {
   workspaceReducer,
@@ -102,14 +106,43 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
     future: [],
   }));
 
+  // The wrapper below needs the state a dispatch will be applied to. Effects
+  // flush between input events, so this is current by the time the next
+  // keystroke arrives.
+  const presentRef = useRef(history.present);
+  useEffect(() => {
+    presentRef.current = history.present;
+  }, [history.present]);
+
+  // Wraps dispatch rather than logging inside the reducer: a reducer must stay
+  // pure, and React's development double-invoke duplicated every entry when it
+  // was not. Entries record actions that changed nothing too - a refused
+  // keystroke is exactly what a bug report needs.
+  const logged: Dispatch<HistoryAction> = useCallback((action) => {
+    const before = presentRef.current;
+    // The reducer is pure, so running it here gives the state the log should
+    // record without waiting for a render - and without missing actions that
+    // change nothing, which never trigger one.
+    const after =
+      action.type === "UNDO" ||
+      action.type === "REDO" ||
+      action.type === "LOAD_PROJECT" ||
+      action.type === "RESET_PROJECT"
+        ? before
+        : workspaceReducer(before, action);
+
+    logAction(action as { type: string } & Record<string, unknown>, after);
+    dispatch(action);
+  }, []);
+
   const value = useMemo(
     () => ({
       state: history.present,
-      dispatch,
+      dispatch: logged,
       canUndo: history.past.length > 0,
       canRedo: history.future.length > 0,
     }),
-    [history]
+    [history, logged]
   );
 
   return (

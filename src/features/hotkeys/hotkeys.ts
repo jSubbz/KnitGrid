@@ -3,7 +3,8 @@ export type HotkeyCommand =
   | "redo"
   | "captureMotif"
   | "setDestination"
-  | "nextRow";
+  | "nextRow"
+  | "turnWork";
 
 export type HotkeyBindings = Record<HotkeyCommand, string>;
 
@@ -13,6 +14,7 @@ export const DEFAULT_HOTKEYS: HotkeyBindings = {
   captureMotif: "T",
   setDestination: "D",
   nextRow: "Enter",
+  turnWork: "Shift+Enter",
 };
 
 const STORAGE_KEY = "knitgrid.hotkeys.v1";
@@ -101,6 +103,9 @@ export function loadHotkeyBindings(): HotkeyBindings {
       nextRow:
         normalizeHotkeyString(parsed.nextRow ?? DEFAULT_HOTKEYS.nextRow) ||
         DEFAULT_HOTKEYS.nextRow,
+      turnWork:
+        normalizeHotkeyString(parsed.turnWork ?? DEFAULT_HOTKEYS.turnWork) ||
+        DEFAULT_HOTKEYS.turnWork,
     };
   } catch {
     return DEFAULT_HOTKEYS;

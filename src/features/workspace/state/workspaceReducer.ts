@@ -50,6 +50,7 @@ export type WorkspaceAction =
   | { type: "MOVE_CURSOR"; dir: "left" | "right" | "up" | "down" }
   | { type: "SET_CURSOR"; cursor: Cursor }
   | { type: "NEXT_ROW" }
+  | { type: "TURN_WORK" }
   | { type: "PAINT_AND_ADVANCE"; stitch: string; force?: boolean }
   | { type: "ERASE_AND_BACKSPACE" }
   | { type: "SET_ROW_NOTE"; row: number; note: string }
@@ -201,17 +202,32 @@ export function workspaceReducer(
 
     case "NEXT_ROW": {
       const rowIndex = state.cursor.row;
-      const rows = cloneRows(state.rows);
-      const row = rows[rowIndex];
+      const row = state.rows[rowIndex];
 
-      if (row && row.cells.length > 0) {
-        const live = liveCountFor(state, rowIndex);
-        // Advancing with stitches still live is a deliberate turn.
-        row.short = consumedBy(row) < live;
+      // Refused while stitches are still live. Turning early is a real thing to
+      // do, but it reshapes everything above, so it must be asked for on
+      // purpose rather than fall out of a stray Enter.
+      if (row && row.cells.length > 0 && consumedBy(row) < liveCountFor(state, rowIndex)) {
+        return state;
       }
 
-      const grown = withRowAt(rows, rowIndex + 1);
+      const rows = withRowAt(cloneRows(state.rows), rowIndex + 1);
+      return clearSelectionState({
+        ...state,
+        rows,
+        cursor: { row: rowIndex + 1, index: 0 },
+      });
+    }
 
+    case "TURN_WORK": {
+      const rowIndex = state.cursor.row;
+      const rows = cloneRows(state.rows);
+      const row = rows[rowIndex];
+      if (!row || row.cells.length === 0) return state;
+
+      row.short = consumedBy(row) < liveCountFor(state, rowIndex);
+
+      const grown = withRowAt(rows, rowIndex + 1);
       return clearSelectionState({
         ...state,
         rows: grown,

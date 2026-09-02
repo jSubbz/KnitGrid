@@ -17,6 +17,9 @@ import table from "./stitches.json";
 
 export type StitchCategory = "base" | "increase" | "decrease" | "special";
 
+/** Which way the stitch leans in the fabric. */
+export type StitchLean = "left" | "right" | "center";
+
 export interface StitchDef {
   id: string;
   abbr: string;
@@ -25,6 +28,7 @@ export interface StitchDef {
   consumes: number;
   produces: number;
   category: StitchCategory;
+  lean?: StitchLean;
   wsCounterpart?: string;
 }
 

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { getStitch, workedAs } from "../../stitches/stitches";
+import StitchGlyph from "../../stitches/StitchGlyph";
 import { liveCountFor, rowStatus, widestRow } from "../../project/rowMath";
 import { useWorkspace } from "../state/WorkspaceContext";
 import type { RowStatus } from "../../project/rowMath";
@@ -47,8 +48,7 @@ export default function WorkspaceGrid() {
 
       const cells = row.cells.map((cell, index) => {
         const stitch = tracking ? workedAs(cell.stitch, rightSide) : getStitch(cell.stitch);
-        const hasGlyph = stitch.glyph !== "";
-        const glyph = hasGlyph ? stitch.glyph : stitch.id === "k" ? "k" : "";
+        const muted = stitch.id === "k";
 
         const isCursor = isCurrentRow && state.cursor.index === index;
         const isSelected =
@@ -76,20 +76,21 @@ export default function WorkspaceGrid() {
               fontSize: 12,
               boxSizing: "border-box",
               background: isCursor ? "#dbeafe" : isSelected ? "#bfdbfe" : "#ffffff",
-              color: hasGlyph ? "#111827" : "#c3cad3",
+              color: muted ? "#c3cad3" : "#111827",
               outline: isCursor ? "2px solid #2563eb" : "none",
               outlineOffset: "-2px",
               userSelect: "none",
               cursor: "pointer",
             }}
           >
-            {glyph}
+            <StitchGlyph stitch={stitch} color={muted ? "#c3cad3" : "#111827"} />
           </div>
         );
       });
 
+      const rowFull = status.remaining <= 0 && row.cells.length > 0;
       const caret =
-        isCurrentRow && state.cursor.index >= row.cells.length ? (
+        isCurrentRow && !rowFull && state.cursor.index >= row.cells.length ? (
           <div
             key="caret"
             style={{
@@ -102,9 +103,28 @@ export default function WorkspaceGrid() {
           />
         ) : null;
 
+      // Ghosts stand in for the live stitches this row has still to work. They
+      // give the row its full extent immediately, so the first stitch lands at
+      // the right-hand end of where the row will sit rather than drifting in
+      // from the middle under centre alignment.
+      const ghostCount = isCurrentRow ? Math.max(0, status.remaining - (caret ? 1 : 0)) : 0;
+      const ghosts = Array.from({ length: ghostCount }, (_, i) => (
+        <div
+          key={`ghost-${i}`}
+          style={{
+            width: CELL,
+            height: CELL,
+            border: "1px dotted #dfe3e8",
+            boxSizing: "border-box",
+          }}
+        />
+      ));
+
       // Stored in work order; the chart reads right to left, so the run is
       // reversed unless a wrong-side row is being followed on the needles.
-      const ordered = rightSide ? [caret, ...cells.slice().reverse()] : [...cells, caret];
+      const ordered = rightSide
+        ? [...ghosts, caret, ...cells.slice().reverse()]
+        : [...cells, caret, ...ghosts];
 
       return (
         <div key={rowIndex} style={{ display: "flex", alignItems: "center", gap: 8 }}>
@@ -150,11 +170,59 @@ export default function WorkspaceGrid() {
     })
     .reverse();
 
+  // When the current row is full, the next consuming stitch starts a row that
+  // does not exist yet. Show where it will land rather than leaving the caret
+  // dangling off the end of a finished row.
+  const currentRow = state.rows[state.cursor.row];
+  const currentStatus = rowStatus(state, state.cursor.row, true);
+  const showPhantom =
+    !!currentRow &&
+    currentRow.cells.length > 0 &&
+    currentStatus.remaining <= 0 &&
+    state.cursor.row === state.rows.length - 1;
+
+  const phantom = showPhantom ? (
+    <div style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.7 }}>
+      <div style={{ width: GUTTER, textAlign: "right", fontSize: 11, color: "#9ca3af" }}>
+        next · {currentStatus.produced} sts
+      </div>
+      <div
+        style={{
+          width: canvas,
+          display: "flex",
+          justifyContent: justify,
+          padding: 1,
+          boxSizing: "border-box",
+        }}
+      >
+        {Array.from({ length: Math.max(0, currentStatus.produced - 1) }, (_, i) => (
+          <div
+            key={i}
+            style={{ width: CELL, height: CELL, border: "1px dotted #dfe3e8", boxSizing: "border-box" }}
+          />
+        ))}
+        <div
+          style={{
+            width: CELL,
+            height: CELL,
+            border: "1px dashed #2563eb",
+            background: "#eff6ff",
+            boxSizing: "border-box",
+          }}
+        />
+      </div>
+      <div style={{ width: NUMBER_COL, fontSize: 11, color: "#9ca3af" }}>
+        {state.rows.length + 1}
+      </div>
+    </div>
+  ) : null;
+
   return (
     <div
       onContextMenu={(event) => event.preventDefault()}
       style={{ display: "grid", gap: 2, width: "fit-content" }}
     >
+      {phantom}
       {rows}
       <div style={{ fontSize: 11, color: "#6b7280", paddingTop: 6, paddingLeft: GUTTER + 8 }}>
         cast on {state.castOn} · {state.rows.length} row

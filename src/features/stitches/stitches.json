@@ -1,6 +1,6 @@
 {
   "tableVersion": 1,
-  "note": "Per-cell truth for a knitting chart. consumes = live stitches taken from the row below; produces = stitches contributed to this row. Charts record right-side appearance; on a wrong-side row of flat knitting the knitter works wsCounterpart. Composite increases are not chart symbols - they are two cells reassembled by the written export. Entries without wsCounterpart are unresearched, not symmetric-by-default. `pending` lists stitches the table must grow to hold and what each one needs from the schema before it can be added.",
+  "note": "Per-cell truth for a knitting chart. consumes = live stitches taken from the row below; produces = stitches contributed to this row. Glyphs here are the on-screen chart glyphs; printed charts leave knit blank, which is an export concern rather than a table one. Charts record right-side appearance; on a wrong-side row of flat knitting the knitter works wsCounterpart. Composite increases are not chart symbols - they are two cells reassembled by the written export. Entries without wsCounterpart are unresearched, not symmetric-by-default. `pending` lists stitches the table must grow to hold and what each one needs from the schema before it can be added. `lean` says which way a stitch leans in the fabric: the drawn glyph slants that way, with a plus for increases and a minus for decreases.",
   "stitches": [
     {
       "id": "noStitch",
@@ -15,7 +15,7 @@
       "id": "k",
       "abbr": "k",
       "name": "knit",
-      "glyph": "",
+      "glyph": "k",
       "consumes": 1,
       "produces": 1,
       "category": "base",
@@ -25,7 +25,7 @@
       "id": "p",
       "abbr": "p",
       "name": "purl",
-      "glyph": "·",
+      "glyph": "p",
       "consumes": 1,
       "produces": 1,
       "category": "base",
@@ -67,7 +67,8 @@
       "glyph": "↖",
       "consumes": 0,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "left"
     },
     {
       "id": "m1r",
@@ -76,7 +77,8 @@
       "glyph": "↗",
       "consumes": 0,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "right"
     },
     {
       "id": "lli",
@@ -85,7 +87,8 @@
       "glyph": "↙",
       "consumes": 0,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "left"
     },
     {
       "id": "rli",
@@ -94,7 +97,8 @@
       "glyph": "↘",
       "consumes": 0,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "right"
     },
     {
       "id": "kf",
@@ -103,7 +107,8 @@
       "glyph": "f",
       "consumes": 1,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "right"
     },
     {
       "id": "kb",
@@ -112,7 +117,8 @@
       "glyph": "b",
       "consumes": 0,
       "produces": 1,
-      "category": "increase"
+      "category": "increase",
+      "lean": "left"
     },
     {
       "id": "k2tog",
@@ -122,7 +128,8 @@
       "consumes": 2,
       "produces": 1,
       "category": "decrease",
-      "wsCounterpart": "p2tog"
+      "wsCounterpart": "p2tog",
+      "lean": "right"
     },
     {
       "id": "ssk",
@@ -132,7 +139,8 @@
       "consumes": 2,
       "produces": 1,
       "category": "decrease",
-      "wsCounterpart": "ssp"
+      "wsCounterpart": "ssp",
+      "lean": "left"
     },
     {
       "id": "p2tog",
@@ -142,7 +150,8 @@
       "consumes": 2,
       "produces": 1,
       "category": "decrease",
-      "wsCounterpart": "k2tog"
+      "wsCounterpart": "k2tog",
+      "lean": "right"
     },
     {
       "id": "ssp",
@@ -152,7 +161,8 @@
       "consumes": 2,
       "produces": 1,
       "category": "decrease",
-      "wsCounterpart": "ssk"
+      "wsCounterpart": "ssk",
+      "lean": "left"
     },
     {
       "id": "k3tog",
@@ -161,7 +171,8 @@
       "glyph": "╱",
       "consumes": 3,
       "produces": 1,
-      "category": "decrease"
+      "category": "decrease",
+      "lean": "right"
     },
     {
       "id": "sssk",
@@ -170,7 +181,8 @@
       "glyph": "╲",
       "consumes": 3,
       "produces": 1,
-      "category": "decrease"
+      "category": "decrease",
+      "lean": "left"
     },
     {
       "id": "cdd",
@@ -179,7 +191,8 @@
       "glyph": "∧",
       "consumes": 3,
       "produces": 1,
-      "category": "decrease"
+      "category": "decrease",
+      "lean": "center"
     }
   ],
   "composites": [

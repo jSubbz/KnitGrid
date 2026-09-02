@@ -18,6 +18,7 @@ const labels: Record<HotkeyCommand, string> = {
   captureMotif: "Capture Motif",
   setDestination: "Set Destination",
   nextRow: "Next Row",
+  turnWork: "Turn Work",
 };
 
 const descriptions: Record<HotkeyCommand, string> = {
@@ -25,7 +26,8 @@ const descriptions: Record<HotkeyCommand, string> = {
   redo: "Redo last undone action",
   captureMotif: "Capture current selection as motif",
   setDestination: "Store current selection as destination",
-  nextRow: "Jump to the next row start",
+  nextRow: "Move to the next row (only once the current row is finished)",
+  turnWork: "Turn early, making the current row a short row",
 };
 
 export default function HotkeyEditorModal({ onClose }: HotkeyEditorModalProps) {
@@ -194,6 +196,9 @@ export default function HotkeyEditorModal({ onClose }: HotkeyEditorModalProps) {
                 nextRow:
                   normalizeHotkeyString(bindings.nextRow) ||
                   DEFAULT_HOTKEYS.nextRow,
+                turnWork:
+                  normalizeHotkeyString(bindings.turnWork) ||
+                  DEFAULT_HOTKEYS.turnWork,
               };
 
               saveHotkeyBindings(normalizedBindings);

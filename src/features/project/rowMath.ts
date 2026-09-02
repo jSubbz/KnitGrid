@@ -108,3 +108,38 @@ export function widestRow(project: KnitProject): number {
 export function createRow(): PatternRow {
   return { cells: [], short: false, note: "" };
 }
+
+export type PaintOutcome = "place" | "rollOver" | "overflow";
+
+/**
+ * What a keystroke will do, decided in one place so the reducer and the UI
+ * cannot disagree about whether a stitch fits.
+ *
+ * A consuming stitch arriving at a row that has used up its live stitches
+ * belongs to the next row. A zero-consume stitch does not - rows routinely end
+ * on an increase - so it stays put. Only a stitch that would eat more than the
+ * row has left is an overflow.
+ */
+export function paintOutcome(
+  project: KnitProject,
+  stitchId: string
+): PaintOutcome {
+  const rowIndex = project.cursor.row;
+  const row = project.rows[rowIndex];
+  const arriving = getStitch(stitchId);
+  const live = liveCountFor(project, rowIndex);
+  const consumed = row ? consumedBy(row) : 0;
+
+  if (
+    arriving.consumes > 0 &&
+    consumed >= live &&
+    (row?.cells.length ?? 0) > 0
+  ) {
+    return "rollOver";
+  }
+
+  const replacing = row?.cells[project.cursor.index];
+  const freed = replacing ? getStitch(replacing.stitch).consumes : 0;
+
+  return consumed - freed + arriving.consumes > live ? "overflow" : "place";
+}

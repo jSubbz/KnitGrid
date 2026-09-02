@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import { DEFAULT_PALETTE, getStitch } from "../features/stitches/stitches";
-import { liveCountFor, rowStatus } from "../features/project/rowMath";
+import { liveCountFor, paintOutcome, rowStatus } from "../features/project/rowMath";
 import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
 import type { RowAnchor } from "../features/project/types";
+import { clearLog, getLog, logNote, saveLog } from "../features/devlog/devlog";
 
 function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null {
   const digit =
@@ -34,6 +35,7 @@ export default function WorkspacePage() {
   const navigate = useNavigate();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
   const [pendingForce, setPendingForce] = useState<string | null>(null);
+  const [blocked, setBlocked] = useState<string | null>(null);
 
   const hotkeys = loadHotkeyBindings();
 
@@ -41,6 +43,9 @@ export default function WorkspacePage() {
     gridWrapRef.current?.focus();
   }, []);
 
+  // Read during render: every dispatch appends to the log and re-renders, so
+  // this tracks without an effect syncing one source of truth into another.
+  const logCount = getLog().length;
   const current = rowStatus(state, state.cursor.row, true);
   const live = liveCountFor(state, state.cursor.row);
 
@@ -123,6 +128,19 @@ export default function WorkspacePage() {
           {state.workspaceMode === "track" ? "Knitting" : "Designing"}
         </button>
 
+        <button
+          type="button"
+          style={{ ...buttonStyle, borderColor: "#b45309" }}
+          title="Turn early, making this a short row. Reshapes everything above it."
+          disabled={current.remaining <= 0}
+          onClick={() => {
+            dispatch({ type: "TURN_WORK" });
+            gridWrapRef.current?.focus();
+          }}
+        >
+          Turn work
+        </button>
+
         <span style={{ width: 12 }} />
 
         <button
@@ -139,12 +157,61 @@ export default function WorkspacePage() {
         >
           Set destination
         </button>
+
+        <span style={{ width: 12 }} />
+
+        <button
+          type="button"
+          style={buttonStyle}
+          title="Mark this moment in the session log"
+          onClick={() => {
+            const note = window.prompt("What went wrong here?");
+            if (note) logNote(note, state);
+            gridWrapRef.current?.focus();
+          }}
+        >
+          Flag
+        </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          title="Write the session log out as a file"
+          onClick={() => void saveLog(state)}
+        >
+          Save log ({logCount})
+        </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => {
+            clearLog();
+            dispatch({ type: "CLEAR_SELECTION" });
+          }}
+        >
+          Clear log
+        </button>
       </div>
 
       <div style={{ fontSize: 13, color: "#94a3b8" }}>
         Row {state.cursor.row + 1} · {current.consumed} of {live} stitches worked ·{" "}
         {current.produced} produced
       </div>
+
+      {blocked && (
+        <div
+          style={{
+            fontSize: 13,
+            color: "#fcd34d",
+            border: "1px solid #b45309",
+            background: "#1c1917",
+            borderRadius: 6,
+            padding: "8px 12px",
+            width: "fit-content",
+          }}
+        >
+          {blocked}
+        </div>
+      )}
 
       <div
         ref={gridWrapRef}
@@ -162,6 +229,19 @@ export default function WorkspacePage() {
           if (hotkey === hotkeys.redo) {
             event.preventDefault();
             if (canRedo) dispatch({ type: "REDO" });
+            return;
+          }
+
+          const stitch = keyToStitch(event);
+          if (stitch) {
+            event.preventDefault();
+            setBlocked(null);
+            const outcome = paintOutcome(state, stitch);
+            if (outcome === "overflow") {
+              setPendingForce(stitch);
+            } else {
+              dispatch({ type: "PAINT_AND_ADVANCE", stitch });
+            }
             return;
           }
 
@@ -199,25 +279,23 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (hotkey === hotkeys.nextRow) {
+          if (hotkey === hotkeys.turnWork) {
             event.preventDefault();
-            dispatch({ type: "NEXT_ROW" });
+            dispatch({ type: "TURN_WORK" });
             return;
           }
 
-          const stitch = keyToStitch(event);
-          if (stitch) {
+          if (hotkey === hotkeys.nextRow) {
             event.preventDefault();
-            const before = state;
-            dispatch({ type: "PAINT_AND_ADVANCE", stitch });
-            // The reducer refuses a stitch that would over-consume the row.
-            // Nothing changes, so offer the override rather than failing silently.
-            const wouldNotFit =
-              before.rows[before.cursor.row] &&
-              rowStatus(before, before.cursor.row, true).consumed +
-                getStitch(stitch).consumes >
-                liveCountFor(before, before.cursor.row);
-            if (wouldNotFit) setPendingForce(stitch);
+            if (current.remaining > 0 && (state.rows[state.cursor.row]?.cells.length ?? 0) > 0) {
+              setBlocked(
+                `Row ${state.cursor.row + 1} still has ${current.remaining} stitch${
+                  current.remaining === 1 ? "" : "es"
+                } live. Finish it, or use Turn work to make it a short row.`
+              );
+              return;
+            }
+            dispatch({ type: "NEXT_ROW" });
             return;
           }
 
