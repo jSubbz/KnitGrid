@@ -82,19 +82,46 @@ export default function WorkspacePage() {
           {state.knitMode === "flat" ? "Flat" : "In the round"}
         </button>
 
-        {(["right", "center", "left"] as RowAnchor[]).map((anchor) => (
+        <span style={{ fontSize: 12, color: "#6b7280", paddingLeft: 4 }}>Align</span>
+        {(
+          [
+            ["right", "Right"],
+            ["center", "Centre"],
+            ["left", "Left"],
+          ] as [RowAnchor, string][]
+        ).map(([value, label]) => (
           <button
-            key={anchor}
+            key={value}
             type="button"
+            title={`Where a row sits when it is narrower than the widest row (${label.toLowerCase()})`}
             style={{
               ...buttonStyle,
-              background: state.anchor === anchor ? "#1d4ed8" : "#1f2937",
+              background: state.anchor === value ? "#1d4ed8" : "#1f2937",
             }}
-            onClick={() => dispatch({ type: "SET_ANCHOR", anchor })}
+            onClick={() => dispatch({ type: "SET_ANCHOR", anchor: value })}
           >
-            {anchor}
+            {label}
           </button>
         ))}
+
+        <span style={{ width: 12 }} />
+
+        <button
+          type="button"
+          style={{
+            ...buttonStyle,
+            background: state.workspaceMode === "track" ? "#047857" : "#1f2937",
+          }}
+          title="Follow the chart on the needles: wrong-side rows flip and show the stitch you actually work"
+          onClick={() =>
+            dispatch({
+              type: "SET_WORKSPACE_MODE",
+              mode: state.workspaceMode === "track" ? "design" : "track",
+            })
+          }
+        >
+          {state.workspaceMode === "track" ? "Knitting" : "Designing"}
+        </button>
 
         <span style={{ width: 12 }} />
 

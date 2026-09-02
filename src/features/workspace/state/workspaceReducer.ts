@@ -158,35 +158,45 @@ export function workspaceReducer(
     }
 
     case "PAINT_AND_ADVANCE": {
-      const rowIndex = state.cursor.row;
+      const arriving = getStitch(action.stitch);
+      const atRow = state.cursor.row;
+      const atRowLive = liveCountFor(state, atRow);
+      const atRowRow = state.rows[atRow];
+      const atRowConsumed = atRowRow ? consumedBy(atRowRow) : 0;
+
+      // A consuming stitch landing on a row that has already used up its live
+      // stitches belongs to the next row. A zero-consume stitch does not: rows
+      // routinely end on an increase, so it stays here.
+      const rollOver =
+        arriving.consumes > 0 &&
+        atRowConsumed >= atRowLive &&
+        (atRowRow?.cells.length ?? 0) > 0;
+
+      const rowIndex = rollOver ? atRow + 1 : atRow;
       const rows = withRowAt(cloneRows(state.rows), rowIndex);
       const row = rows[rowIndex];
+      const cursorIndex = rollOver ? row.cells.length : state.cursor.index;
 
       // Replacing an existing cell frees whatever it consumed, so measure the
       // overflow against the row as it will be, not as it is.
-      const replacing = row.cells[state.cursor.index];
+      const replacing = row.cells[cursorIndex];
       const freed = replacing ? getStitch(replacing.stitch).consumes : 0;
-      const live = liveCountFor(state, rowIndex);
-      const after =
-        consumedBy(row) - freed + getStitch(action.stitch).consumes;
+      const live = rollOver ? liveCountFor(state, rowIndex) : atRowLive;
+      const after = consumedBy(row) - freed + arriving.consumes;
 
       if (after > live && !action.force) return state;
 
       if (replacing) {
-        row.cells[state.cursor.index] = { stitch: action.stitch };
+        row.cells[cursorIndex] = { stitch: action.stitch };
       } else {
         row.cells.push({ stitch: action.stitch });
       }
 
-      const consumedNow = consumedBy(row);
-      const complete = consumedNow === live && row.cells.length > 0;
-      const withRows = complete ? withRowAt(rows, rowIndex + 1) : rows;
-
-      const cursor: Cursor = complete
-        ? { row: rowIndex + 1, index: 0 }
-        : { row: rowIndex, index: state.cursor.index + 1 };
-
-      return clearSelectionState({ ...state, rows: withRows, cursor });
+      return clearSelectionState({
+        ...state,
+        rows,
+        cursor: { row: rowIndex, index: cursorIndex + 1 },
+      });
     }
 
     case "NEXT_ROW": {

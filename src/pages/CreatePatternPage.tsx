@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import { MAX_CAST_ON, MIN_CAST_ON } from "../features/project/types";
-import type { KnitMode } from "../features/project/types";
+import type { KnitMode, RowAnchor } from "../features/project/types";
 
 const fieldStyle: React.CSSProperties = {
   padding: "10px 12px",
@@ -34,6 +34,7 @@ export default function CreatePatternPage() {
   const [castOn, setCastOn] = useState("6");
   const [notes, setNotes] = useState("");
   const [knitMode, setKnitMode] = useState<KnitMode>("flat");
+  const [anchor, setAnchor] = useState<RowAnchor>("right");
 
   const parsed = Number(castOn);
   const valid =
@@ -43,6 +44,7 @@ export default function CreatePatternPage() {
     if (!valid) return;
     dispatch({ type: "RESET_PROJECT", castOn: parsed, notes });
     dispatch({ type: "SET_KNIT_MODE", mode: knitMode });
+    dispatch({ type: "SET_ANCHOR", anchor });
     navigate("/workspace");
   };
 
@@ -103,6 +105,38 @@ export default function CreatePatternPage() {
             </button>
           ))}
         </div>
+      </div>
+
+      <div style={{ display: "grid", gap: 6 }}>
+        <span>
+          Row alignment{" "}
+          <span style={{ color: "#6b7280" }}>· changeable later</span>
+        </span>
+        <div style={{ display: "flex", gap: 8 }}>
+          {(
+            [
+              ["right", "Right", "Rows line up where knitting starts"],
+              ["center", "Centre", "Shaping spreads evenly to both sides"],
+              ["left", "Left", "Rows line up at the far edge"],
+            ] as [RowAnchor, string, string][]
+          ).map(([value, label, hint]) => (
+            <button
+              key={value}
+              type="button"
+              title={hint}
+              onClick={() => setAnchor(value)}
+              style={{
+                ...buttonStyle,
+                background: anchor === value ? "#1d4ed8" : "#1f2937",
+              }}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span style={{ fontSize: 12, color: "#6b7280" }}>
+          Where a row sits when it is narrower than the widest row.
+        </span>
       </div>
 
       <label style={{ display: "grid", gap: 6 }}>
