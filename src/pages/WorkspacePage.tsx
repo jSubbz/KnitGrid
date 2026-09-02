@@ -8,13 +8,18 @@ import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
 import type { RowAnchor } from "../features/project/types";
 import { clearLog, getLog, logNote, saveLog } from "../features/devlog/devlog";
 
+/**
+ * Reads a stitch off the number row or the numpad. Matching on `code` as well
+ * as `key` keeps the numpad working with NumLock off, where the digits report
+ * themselves as arrow keys, and keeps Shift+digit working, where they report
+ * themselves as punctuation.
+ */
 function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null {
-  const digit =
-    event.key >= "0" && event.key <= "9"
+  const digit = /^(Digit|Numpad)[0-9]$/.test(event.code)
+    ? Number(event.code.slice(-1))
+    : event.key >= "0" && event.key <= "9"
       ? Number(event.key)
-      : /^Numpad[0-9]$/.test(event.code)
-        ? Number(event.code.slice(-1))
-        : null;
+      : null;
 
   if (digit === null) return null;
   return DEFAULT_PALETTE[digit] ?? null;
@@ -176,7 +181,12 @@ export default function WorkspacePage() {
           type="button"
           style={buttonStyle}
           title="Write the session log out as a file"
-          onClick={() => void saveLog(state)}
+          onClick={() => {
+            void saveLog(state).then(
+              (where) => setBlocked(`Log written to ${where}`),
+              (error: unknown) => setBlocked(`Could not save log: ${String(error)}`)
+            );
+          }}
         >
           Save log ({logCount})
         </button>
@@ -236,6 +246,8 @@ export default function WorkspacePage() {
           if (stitch) {
             event.preventDefault();
             setBlocked(null);
+
+
             const outcome = paintOutcome(state, stitch);
             if (outcome === "overflow") {
               setPendingForce(stitch);
@@ -276,6 +288,13 @@ export default function WorkspacePage() {
           if (hotkey === hotkeys.setDestination) {
             event.preventDefault();
             dispatch({ type: "SET_DESTINATION_FROM_SELECTION" });
+            return;
+          }
+
+          if (hotkey === hotkeys.fillRow) {
+            event.preventDefault();
+            setBlocked(null);
+            dispatch({ type: "FILL_ROW" });
             return;
           }
 
@@ -321,12 +340,21 @@ export default function WorkspacePage() {
         <WorkspaceGrid />
       </div>
 
-      <div style={{ fontSize: 12, color: "#6b7280" }}>
-        {DEFAULT_PALETTE.map((id, digit) => (
-          <span key={id} style={{ marginRight: 12 }}>
-            <strong style={{ color: "#94a3b8" }}>{digit}</strong> {getStitch(id).abbr}
-          </span>
-        ))}
+      <div style={{ display: "grid", gap: 4 }}>
+        <div style={{ fontSize: 12, color: "#6b7280" }}>
+          {DEFAULT_PALETTE.map((id, digit) => (
+            <span key={id} style={{ marginRight: 12 }}>
+              <strong style={{ color: "#94a3b8" }}>{digit}</strong> {getStitch(id).abbr}
+            </span>
+          ))}
+        </div>
+        <div style={{ fontSize: 12, color: "#4b5563" }}>
+          <strong style={{ color: "#94a3b8" }}>Space</strong> works to the last
+          stitch, where shaping goes — press again to take the last one ·{" "}
+          <strong style={{ color: "#94a3b8" }}>Enter</strong> starts the next row
+          · <strong style={{ color: "#94a3b8" }}>Shift+Enter</strong> turns early
+          for a short row
+        </div>
       </div>
 
       {pendingForce && (

@@ -22,3 +22,9 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# local build output used for screenshots
+.shot*
+
+# session logs
+logs

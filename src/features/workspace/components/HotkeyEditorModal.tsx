@@ -19,6 +19,7 @@ const labels: Record<HotkeyCommand, string> = {
   setDestination: "Set Destination",
   nextRow: "Next Row",
   turnWork: "Turn Work",
+  fillRow: "Knit To Last Stitch",
 };
 
 const descriptions: Record<HotkeyCommand, string> = {
@@ -28,6 +29,7 @@ const descriptions: Record<HotkeyCommand, string> = {
   setDestination: "Store current selection as destination",
   nextRow: "Move to the next row (only once the current row is finished)",
   turnWork: "Turn early, making the current row a short row",
+  fillRow: "Work to the last stitch, where shaping goes. Press again to take the last one",
 };
 
 export default function HotkeyEditorModal({ onClose }: HotkeyEditorModalProps) {
@@ -199,6 +201,9 @@ export default function HotkeyEditorModal({ onClose }: HotkeyEditorModalProps) {
                 turnWork:
                   normalizeHotkeyString(bindings.turnWork) ||
                   DEFAULT_HOTKEYS.turnWork,
+                fillRow:
+                  normalizeHotkeyString(bindings.fillRow) ||
+                  DEFAULT_HOTKEYS.fillRow,
               };
 
               saveHotkeyBindings(normalizedBindings);

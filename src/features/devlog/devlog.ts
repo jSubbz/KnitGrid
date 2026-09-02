@@ -7,7 +7,7 @@
  * looks wrong.
  */
 import type { KnitProject } from "../project/types";
-import { liveCountFor, rowStatus } from "../project/rowMath";
+import { liveCountFor, producedBy, rowStatus } from "../project/rowMath";
 
 const STORAGE_KEY = "knitgrid.devlog.v1";
 const MAX_ENTRIES = 500;
@@ -18,6 +18,8 @@ export interface LogEntry {
   action?: string;
   detail?: Record<string, unknown>;
   cursor?: { row: number; index: number };
+  /** Produced count of every row, so a closed row is still visible. */
+  chart?: number[];
   row?: {
     index: number;
     state: string;
@@ -81,6 +83,7 @@ export function logAction(
     action: type,
     detail: Object.keys(detail).length ? detail : undefined,
     cursor: { ...after.cursor },
+    chart: after.rows.map((r) => producedBy(r)),
     row: snapshot(after),
   });
 }
@@ -131,12 +134,33 @@ type SavePickerWindow = Window & {
   }>;
 };
 
-/** Writes the log out as a file. Save it into the project folder to hand over. */
-export async function saveLog(project?: KnitProject) {
+/**
+ * Writes the log out.
+ *
+ * In development the dev server writes it straight into the project's logs
+ * folder, which is the only way to land on a real path - a page cannot choose
+ * one, and browsers without a save picker can only drop it in Downloads. The
+ * picker and the plain download remain as fallbacks.
+ *
+ * Returns where it went, so the UI can say so.
+ */
+export async function saveLog(project?: KnitProject): Promise<string> {
   const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
   const name = `knitgrid-log-${stamp}.json`;
   const text = serializeLog(project);
   const win = window as SavePickerWindow;
+
+  if (import.meta.env.DEV) {
+    try {
+      const response = await fetch("/__devlog", { method: "POST", body: text });
+      if (response.ok) {
+        const result = (await response.json()) as { file?: string };
+        return result.file ?? name;
+      }
+    } catch {
+      // Dev server not reachable; fall through to the browser paths.
+    }
+  }
 
   if (typeof win.showSaveFilePicker === "function") {
     const handle = await win.showSaveFilePicker({
@@ -152,7 +176,7 @@ export async function saveLog(project?: KnitProject) {
     const writable = await handle.createWritable();
     await writable.write(text);
     await writable.close();
-    return;
+    return name;
   }
 
   const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
@@ -161,4 +185,5 @@ export async function saveLog(project?: KnitProject) {
   anchor.download = name;
   anchor.click();
   URL.revokeObjectURL(url);
+  return `Downloads/${name}`;
 }

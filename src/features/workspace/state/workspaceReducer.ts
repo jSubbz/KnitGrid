@@ -49,6 +49,7 @@ export type WorkspaceAction =
   | { type: "CLEAR_MIRRORS" }
   | { type: "MOVE_CURSOR"; dir: "left" | "right" | "up" | "down" }
   | { type: "SET_CURSOR"; cursor: Cursor }
+  | { type: "FILL_ROW" }
   | { type: "NEXT_ROW" }
   | { type: "TURN_WORK" }
   | { type: "PAINT_AND_ADVANCE"; stitch: string; force?: boolean }
@@ -160,6 +161,7 @@ export function workspaceReducer(
 
     case "PAINT_AND_ADVANCE": {
       const arriving = getStitch(action.stitch);
+
       const atRow = state.cursor.row;
       const atRowLive = liveCountFor(state, atRow);
       const atRowRow = state.rows[atRow];
@@ -197,6 +199,48 @@ export function workspaceReducer(
         ...state,
         rows,
         cursor: { row: rowIndex, index: cursorIndex + 1 },
+      });
+    }
+
+    case "FILL_ROW": {
+      const rowIndex = state.cursor.row;
+      const rows = withRowAt(cloneRows(state.rows), rowIndex);
+      const row = rows[rowIndex];
+      const live = liveCountFor(state, rowIndex);
+
+      // Repeat the row's plain stitch, so a purl row fills with purls. Only
+      // base stitches qualify: "knit to last stitch" after a k1, k2tog opening
+      // means knit, not another five decreases, and increases consume nothing
+      // so they would never terminate.
+      const previous = [...row.cells]
+        .reverse()
+        .find((cell) => getStitch(cell.stitch).category === "base");
+      const fillWith = previous?.stitch ?? DEFAULT_STITCH;
+      const cost = getStitch(fillWith).consumes;
+      if (cost <= 0) return state;
+
+      let consumed = consumedBy(row);
+      const available = live - consumed;
+      if (available <= 0) return state;
+
+      // Stops one stitch short, because that is where the shaping goes:
+      // k1, m1r, knit to last stitch, m1l, k1. Pressing again once a single
+      // stitch is left works it, so a plain row is two presses.
+      const limit = available > cost ? live - 1 : live;
+
+      let added = 0;
+      while (consumed + cost <= limit) {
+        row.cells.push({ stitch: fillWith });
+        consumed += cost;
+        added += 1;
+      }
+
+      if (added === 0) return state;
+
+      return clearSelectionState({
+        ...state,
+        rows,
+        cursor: { row: rowIndex, index: row.cells.length },
       });
     }
 

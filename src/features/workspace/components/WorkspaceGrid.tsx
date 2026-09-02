@@ -143,7 +143,9 @@ export default function WorkspaceGrid() {
                 ? `short · ${status.produced} sts`
                 : status.remaining > 0
                   ? `${status.remaining} of ${live} left`
-                  : `${status.produced} sts`}
+                  : isCurrentRow
+                    ? `${status.produced} sts · Enter`
+                    : `${status.produced} sts`}
           </div>
 
           <div
