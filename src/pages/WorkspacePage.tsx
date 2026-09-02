@@ -2,45 +2,19 @@ import { useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
-import type { PatternSymbol } from "../features/project/types";
+import { DEFAULT_PALETTE } from "../features/stitches/stitches";
 import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
 
-function keyToSymbol(event: React.KeyboardEvent<HTMLDivElement>): PatternSymbol | null {
-  if (event.key >= "0" && event.key <= "5") {
-    switch (event.key) {
-      case "0":
-        return "empty";
-      case "1":
-        return "dot";
-      case "2":
-        return "h";
-      case "3":
-        return "v";
-      case "4":
-        return "diagFwd";
-      case "5":
-        return "diagBack";
-      default:
-        return null;
-    }
-  }
+function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null {
+  const digit =
+    event.key >= "0" && event.key <= "9"
+      ? Number(event.key)
+      : /^Numpad[0-9]$/.test(event.code)
+        ? Number(event.code.slice(-1))
+        : null;
 
-  switch (event.code) {
-    case "Numpad0":
-      return "empty";
-    case "Numpad1":
-      return "dot";
-    case "Numpad2":
-      return "h";
-    case "Numpad3":
-      return "v";
-    case "Numpad4":
-      return "diagFwd";
-    case "Numpad5":
-      return "diagBack";
-    default:
-      return null;
-  }
+  if (digit === null) return null;
+  return DEFAULT_PALETTE[digit] ?? null;
 }
 
 export default function WorkspacePage() {
@@ -313,10 +287,10 @@ export default function WorkspacePage() {
             return;
           }
 
-          const symbol = keyToSymbol(event);
+          const stitch = keyToStitch(event);
 
           const shouldExitMirrorMode =
-            !!symbol ||
+            !!stitch ||
             event.key === "Backspace" ||
             event.key === "Delete" ||
             hotkey === hotkeys.nextRow;
@@ -361,9 +335,9 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (symbol) {
+          if (stitch) {
             event.preventDefault();
-            dispatch({ type: "PAINT_AND_ADVANCE", symbol });
+            dispatch({ type: "PAINT_AND_ADVANCE", stitch });
             return;
           }
 

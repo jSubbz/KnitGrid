@@ -119,6 +119,9 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// The hook belongs beside the provider it reads; splitting it into its own file
+// would buy only HMR ergonomics.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useWorkspace() {
   const context = useContext(WorkspaceContext);
 

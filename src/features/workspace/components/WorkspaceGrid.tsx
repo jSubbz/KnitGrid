@@ -1,25 +1,6 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import type { PatternSymbol } from "../../project/types";
+import { getStitch } from "../../stitches/stitches";
 import { useWorkspace } from "../state/WorkspaceContext";
-
-function symbolToText(symbol: PatternSymbol): string {
-  switch (symbol) {
-    case "empty":
-      return "";
-    case "dot":
-      return "·";
-    case "h":
-      return "—";
-    case "v":
-      return "|";
-    case "diagFwd":
-      return "/";
-    case "diagBack":
-      return "\\";
-    default:
-      return "";
-  }
-}
 
 export default function WorkspaceGrid() {
   const { state, dispatch } = useWorkspace();
@@ -40,13 +21,17 @@ export default function WorkspaceGrid() {
     dispatch({ type: "SET_SHAPE_CELL", r, c, value });
   };
 
-  const cells: ReactNode[] = [];
-
-  for (let r = 0; r < state.rows; r += 1) {
-    for (let c = 0; c < state.cols; c += 1) {
+  const cells: ReactNode[] = Array.from({ length: state.rows }, (_, r) =>
+    Array.from({ length: state.cols }, (_, c) => {
       const isCursor = state.cursor.r === r && state.cursor.c === c;
       const inShape = state.shapeMask[r][c];
-      const symbol = state.pattern[r][c].symbol;
+      const stitch = getStitch(state.pattern[r][c].stitch);
+      // Blank-is-knit is the printed-chart convention, but an editor where the
+      // commonest keystroke draws nothing gives no feedback. Stitches with no
+      // printed glyph get a muted placeholder so worked cells stay visible and
+      // stay distinct from cells that hold no stitch at all.
+      const hasGlyph = stitch.glyph !== "";
+      const glyph = hasGlyph ? stitch.glyph : stitch.id === "k" ? "k" : "";
 
       const rect = state.selection.rect;
       const isSelected =
@@ -71,7 +56,7 @@ export default function WorkspaceGrid() {
         c >= dest.minC &&
         c <= dest.maxC;
 
-      cells.push(
+      return (
         <div
           key={`${r}-${c}`}
           onMouseDown={(event) => {
@@ -120,7 +105,7 @@ export default function WorkspaceGrid() {
                     : inShape
                       ? "#ffffff"
                       : "#e5e7eb",
-            color: "#111827",
+            color: hasGlyph ? "#111827" : "#c3cad3",
             outline: isCursor
               ? "2px solid #2563eb"
               : inCapturedMotif
@@ -133,11 +118,11 @@ export default function WorkspaceGrid() {
             cursor: "crosshair",
           }}
         >
-          {inShape ? symbolToText(symbol) : ""}
+          {inShape ? glyph : ""}
         </div>
       );
-    }
-  }
+    })
+  ).flat();
 
   return (
     <div

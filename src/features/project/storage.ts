@@ -1,13 +1,22 @@
-import type { KnitProject, PatternCell, PatternSymbol } from "./types";
+import { DEFAULT_STITCH, isKnownStitch } from "../stitches/stitches";
+import type { KnitProject, PatternCell, RowAnchor } from "./types";
 
-const VALID_SYMBOLS: PatternSymbol[] = [
-  "empty",
-  "dot",
-  "h",
-  "v",
-  "diagFwd",
-  "diagBack",
-];
+export const PROJECT_VERSION = 2;
+
+/**
+ * Version 1 stored six decorative glyphs with no stitch semantics. Mapping them
+ * onto real stitches is a judgement call: `dot` and the two diagonals had an
+ * obvious reading, `h` never did. Anything unrecognised becomes a plain knit,
+ * which is count-neutral and so cannot make an old chart fail validation.
+ */
+const V1_SYMBOL_MAP: Record<string, string> = {
+  empty: "k",
+  dot: "p",
+  v: "sl",
+  diagFwd: "k2tog",
+  diagBack: "ssk",
+  h: "k",
+};
 
 type SavePickerWindow = Window & {
   showSaveFilePicker?: (options?: {
@@ -28,20 +37,22 @@ function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function normalizeSymbol(value: unknown): PatternSymbol {
-  return VALID_SYMBOLS.includes(value as PatternSymbol)
-    ? (value as PatternSymbol)
-    : "empty";
+function normalizeStitch(value: unknown): string {
+  if (isKnownStitch(value)) return value;
+  if (typeof value === "string" && value in V1_SYMBOL_MAP) {
+    return V1_SYMBOL_MAP[value];
+  }
+  return DEFAULT_STITCH;
 }
 
 function normalizePatternCell(value: unknown): PatternCell {
   if (isObject(value)) {
     return {
-      symbol: normalizeSymbol(value.symbol),
+      stitch: normalizeStitch(value.stitch ?? value.symbol),
     };
   }
 
-  return { symbol: "empty" };
+  return { stitch: DEFAULT_STITCH };
 }
 
 function normalizeBooleanMatrix(
@@ -68,7 +79,7 @@ function normalizePatternMatrix(
 ): PatternCell[][] {
   if (!Array.isArray(value)) {
     return Array.from({ length: fallbackRows }, () =>
-      Array.from({ length: fallbackCols }, () => ({ symbol: "empty" as const }))
+      Array.from({ length: fallbackCols }, () => ({ stitch: DEFAULT_STITCH }))
     );
   }
 
@@ -142,10 +153,11 @@ export function parseProjectJson(text: string): KnitProject {
       : 40;
 
   return {
-    version:
-      typeof raw.version === "number" && Number.isFinite(raw.version)
-        ? raw.version
-        : 1,
+    version: PROJECT_VERSION,
+    anchor:
+      raw.anchor === "left" || raw.anchor === "center" || raw.anchor === "right"
+        ? (raw.anchor as RowAnchor)
+        : "right",
     rows,
     cols,
     knitMode: raw.knitMode === "round" ? "round" : "flat",

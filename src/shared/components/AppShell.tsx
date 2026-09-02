@@ -1,4 +1,5 @@
 import { useMemo, useRef, useState } from "react";
+import { STITCH_LIST } from "../../features/stitches/stitches";
 import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useWorkspace } from "../../features/workspace/state/WorkspaceContext";
 import { readProjectFile, saveProjectAs } from "../../features/project/storage";
@@ -19,7 +20,7 @@ export default function AppShell() {
   const title = useMemo(() => {
     if (location.pathname === "/create") return "Create Pattern";
     if (location.pathname === "/workspace") return "Workspace";
-    if (location.pathname === "/patterns") return "Pattern Zone";
+    if (location.pathname === "/library") return "Library";
     if (location.pathname === "/settings") return "Settings";
     return "KnitGrid";
   }, [location.pathname]);
@@ -233,7 +234,7 @@ export default function AppShell() {
                   style={menuItemStyle}
                   onClick={() => {
                     window.alert(
-                      "Start here:\n\nBrowse patterns for sale on the main page, or use File -> New to start a pattern yourself."
+                      "Start here:\n\nOpen a starter chart from the Library, or use File -> New to begin your own pattern."
                     );
                     closeMenus();
                   }}
@@ -245,7 +246,7 @@ export default function AppShell() {
                   style={menuItemStyle}
                   onClick={() => {
                     window.alert(
-                      "KnitGrid\nDevelopment build\nWorkspace, Pattern Zone, and tiling are in active development."
+                      "KnitGrid\nDevelopment build\nWorkspace, Library, and tiling are in active development."
                     );
                     closeMenus();
                   }}
@@ -256,8 +257,20 @@ export default function AppShell() {
             )}
           </div>
 
-          <div style={{ marginLeft: "auto", paddingRight: 8, fontSize: 13, color: "#94a3b8" }}>
-            {language}
+          <div
+            style={{
+              marginLeft: "auto",
+              paddingRight: 8,
+              fontSize: 13,
+              color: "#94a3b8",
+              display: "flex",
+              gap: 12,
+            }}
+          >
+            <span title={`${STITCH_LIST.length} stitches in the table`}>
+              v0.2.1 · {STITCH_LIST.length} stitches
+            </span>
+            <span>{language}</span>
           </div>
         </div>
 

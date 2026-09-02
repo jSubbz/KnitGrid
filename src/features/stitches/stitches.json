@@ -1,0 +1,223 @@
+{
+  "tableVersion": 1,
+  "note": "Per-cell truth for a knitting chart. consumes = live stitches taken from the row below; produces = stitches contributed to this row. Charts record right-side appearance; on a wrong-side row of flat knitting the knitter works wsCounterpart. Composite increases are not chart symbols - they are two cells reassembled by the written export. Entries without wsCounterpart are unresearched, not symmetric-by-default. `pending` lists stitches the table must grow to hold and what each one needs from the schema before it can be added.",
+  "stitches": [
+    {
+      "id": "noStitch",
+      "abbr": "",
+      "name": "no stitch",
+      "glyph": "",
+      "consumes": 0,
+      "produces": 0,
+      "category": "base"
+    },
+    {
+      "id": "k",
+      "abbr": "k",
+      "name": "knit",
+      "glyph": "",
+      "consumes": 1,
+      "produces": 1,
+      "category": "base",
+      "wsCounterpart": "p"
+    },
+    {
+      "id": "p",
+      "abbr": "p",
+      "name": "purl",
+      "glyph": "·",
+      "consumes": 1,
+      "produces": 1,
+      "category": "base",
+      "wsCounterpart": "k"
+    },
+    {
+      "id": "sl",
+      "abbr": "sl",
+      "name": "slip",
+      "glyph": "V",
+      "consumes": 1,
+      "produces": 1,
+      "category": "special",
+      "wsCounterpart": "sl"
+    },
+    {
+      "id": "yo",
+      "abbr": "yo",
+      "name": "yarn over",
+      "glyph": "○",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase",
+      "wsCounterpart": "yo"
+    },
+    {
+      "id": "m1",
+      "abbr": "m1",
+      "name": "make one",
+      "glyph": "m",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "m1l",
+      "abbr": "m1l",
+      "name": "make one left",
+      "glyph": "↖",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "m1r",
+      "abbr": "m1r",
+      "name": "make one right",
+      "glyph": "↗",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "lli",
+      "abbr": "lli",
+      "name": "left lifted increase",
+      "glyph": "↙",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "rli",
+      "abbr": "rli",
+      "name": "right lifted increase",
+      "glyph": "↘",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "kf",
+      "abbr": "kf",
+      "name": "knit front",
+      "glyph": "f",
+      "consumes": 1,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "kb",
+      "abbr": "kb",
+      "name": "knit back",
+      "glyph": "b",
+      "consumes": 0,
+      "produces": 1,
+      "category": "increase"
+    },
+    {
+      "id": "k2tog",
+      "abbr": "k2tog",
+      "name": "knit two together",
+      "glyph": "/",
+      "consumes": 2,
+      "produces": 1,
+      "category": "decrease",
+      "wsCounterpart": "p2tog"
+    },
+    {
+      "id": "ssk",
+      "abbr": "ssk",
+      "name": "slip slip knit",
+      "glyph": "\\",
+      "consumes": 2,
+      "produces": 1,
+      "category": "decrease",
+      "wsCounterpart": "ssp"
+    },
+    {
+      "id": "p2tog",
+      "abbr": "p2tog",
+      "name": "purl two together",
+      "glyph": "/",
+      "consumes": 2,
+      "produces": 1,
+      "category": "decrease",
+      "wsCounterpart": "k2tog"
+    },
+    {
+      "id": "ssp",
+      "abbr": "ssp",
+      "name": "slip slip purl",
+      "glyph": "\\",
+      "consumes": 2,
+      "produces": 1,
+      "category": "decrease",
+      "wsCounterpart": "ssk"
+    },
+    {
+      "id": "k3tog",
+      "abbr": "k3tog",
+      "name": "knit three together",
+      "glyph": "╱",
+      "consumes": 3,
+      "produces": 1,
+      "category": "decrease"
+    },
+    {
+      "id": "sssk",
+      "abbr": "sssk",
+      "name": "slip slip slip knit",
+      "glyph": "╲",
+      "consumes": 3,
+      "produces": 1,
+      "category": "decrease"
+    },
+    {
+      "id": "cdd",
+      "abbr": "cdd",
+      "name": "centred double decrease",
+      "glyph": "∧",
+      "consumes": 3,
+      "produces": 1,
+      "category": "decrease"
+    }
+  ],
+  "composites": [
+    {
+      "abbr": "kfb",
+      "name": "knit front and back",
+      "cells": [
+        "kf",
+        "kb"
+      ]
+    },
+    {
+      "abbr": "lli",
+      "name": "left lifted increase",
+      "cells": [
+        "k",
+        "lli"
+      ]
+    },
+    {
+      "abbr": "rli",
+      "name": "right lifted increase",
+      "cells": [
+        "rli",
+        "k"
+      ]
+    }
+  ],
+  "pending": [
+    {
+      "id": "ds",
+      "name": "double stitch",
+      "why": "Central to shaping and German short rows. Must be drawn distinctly on the chart so the turning points are visible.",
+      "notes": [
+        "Count-neutral in both directions: creating a double stitch consumes 1 and produces 1, and resolving it consumes 1 and produces 1. The two integers alone therefore cannot express it.",
+        "It carries state. A created double stitch must be resolved exactly once, later, in the same column. That is a column-wise invariant, unlike everything else in this table, which is row-wise. StitchDef will need a field for it - a pair id, or a marker flag.",
+        "Short rows break the row invariant. A short row deliberately stops and turns, so it consumes fewer stitches than the row below produced. Row validation must know a row is short, or every short row reads as an error."
+      ]
+    }
+  ]
+}

@@ -2,16 +2,12 @@ export type KnitMode = "flat" | "round";
 export type WorkspaceMode = "design" | "track";
 export type TileMode = "across" | "up" | "dest";
 
-export type PatternSymbol =
-  | "empty"
-  | "dot"
-  | "h"
-  | "v"
-  | "diagFwd"
-  | "diagBack";
+/** Where a row sits when it is narrower than the widest row. */
+export type RowAnchor = "left" | "center" | "right";
 
+/** One stitch in the finished fabric. `stitch` is an id into the stitch table. */
 export interface PatternCell {
-  symbol: PatternSymbol;
+  stitch: string;
 }
 
 export interface Cursor {
@@ -58,6 +54,7 @@ export interface YarnDetails {
 
 export interface KnitProject {
   version: number;
+  anchor: RowAnchor;
   rows: number;
   cols: number;
   knitMode: KnitMode;

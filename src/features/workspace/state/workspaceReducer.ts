@@ -1,8 +1,8 @@
+import { DEFAULT_STITCH } from "../../stitches/stitches";
 import type {
   KnitProject,
   KnitMode,
   PatternCell,
-  PatternSymbol,
   WorkspaceMode,
 } from "../../project/types";
 
@@ -28,7 +28,7 @@ export type WorkspaceAction =
   | { type: "SET_SHAPE_CELL"; r: number; c: number; value: boolean }
   | { type: "MOVE_CURSOR"; dir: "left" | "right" | "up" | "down" }
   | { type: "NEXT_ROW_START" }
-  | { type: "PAINT_AND_ADVANCE"; symbol: PatternSymbol }
+  | { type: "PAINT_AND_ADVANCE"; stitch: string }
   | { type: "ERASE_AND_BACKSPACE" }
   | { type: "CLEAR_SELECTION" }
   | { type: "EXTEND_SELECTION"; dir: "left" | "right" | "up" | "down" }
@@ -51,7 +51,7 @@ function createShapeMask(rows: number, cols: number, fill = true): boolean[][] {
 
 function createPattern(rows: number, cols: number): PatternCell[][] {
   return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => ({ symbol: "empty" as const }))
+    Array.from({ length: cols }, () => ({ stitch: DEFAULT_STITCH }))
   );
 }
 
@@ -324,7 +324,7 @@ export function workspaceReducer(
       const { r, c } = state.cursor;
       const nextPattern = clonePattern(state.pattern);
 
-      nextPattern[r][c] = { symbol: action.symbol };
+      nextPattern[r][c] = { stitch: action.stitch };
 
       const nextCursor = getAdvancedCursor(state);
 
@@ -340,7 +340,7 @@ export function workspaceReducer(
       const prevCursor = getPreviousCursor(state);
       const nextPattern = clonePattern(state.pattern);
 
-      nextPattern[prevCursor.r][prevCursor.c] = { symbol: "empty" };
+      nextPattern[prevCursor.r][prevCursor.c] = { stitch: DEFAULT_STITCH };
 
       return {
         ...state,

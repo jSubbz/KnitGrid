@@ -1,3 +1,4 @@
+import { DEFAULT_STITCH } from "../stitches/stitches";
 import type { KnitProject, PatternCell } from "./types";
 
 function createShapeMask(rows: number, cols: number, fill = true): boolean[][] {
@@ -8,13 +9,14 @@ function createShapeMask(rows: number, cols: number, fill = true): boolean[][] {
 
 function createPattern(rows: number, cols: number): PatternCell[][] {
   return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => ({ symbol: "empty" as const }))
+    Array.from({ length: cols }, () => ({ stitch: DEFAULT_STITCH }))
   );
 }
 
 export function createEmptyProject(rows = 40, cols = 40): KnitProject {
   return {
-    version: 1,
+    version: 2,
+    anchor: "right",
     rows,
     cols,
     knitMode: "flat",
