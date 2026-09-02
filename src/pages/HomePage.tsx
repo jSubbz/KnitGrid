@@ -40,14 +40,14 @@ export default function HomePage() {
               fontSize: 16,
             }}
           >
-            Chart knitting patterns on a grid. Open a saved project from the
-            library, or use <strong>File → New</strong> to begin your own.
+            Chart knitting patterns on a grid. The shape comes from the stitches:
+            cast on, type a row, and the next row is worked out for you.
           </p>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
             <button
               type="button"
-              onClick={() => navigate("/workspace")}
+              onClick={() => navigate("/create")}
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
@@ -58,7 +58,7 @@ export default function HomePage() {
                 cursor: "pointer",
               }}
             >
-              Open Workspace
+              New pattern
             </button>
 
             <button

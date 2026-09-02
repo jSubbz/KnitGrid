@@ -1,3 +1,12 @@
+/**
+ * Project model, version 3.
+ *
+ * A chart is a list of rows in the order they are worked: index 0 is the
+ * cast-on row, and the renderer flips the list so the work builds upward on
+ * screen. A row is a list of stitches, not a fixed-width slice of a grid - its
+ * length is however many stitches it took to consume the row below.
+ */
+
 export type KnitMode = "flat" | "round";
 export type WorkspaceMode = "design" | "track";
 export type TileMode = "across" | "up" | "dest";
@@ -10,16 +19,28 @@ export interface PatternCell {
   stitch: string;
 }
 
+export interface PatternRow {
+  cells: PatternCell[];
+  /**
+   * Set when the knitter deliberately turned before consuming the row below.
+   * A short row is valid but under-consuming; without this flag it would be
+   * indistinguishable from an unfinished row.
+   */
+  short: boolean;
+  note: string;
+}
+
+/** Position of the caret: which row, and how many stitches into it. */
 export interface Cursor {
-  r: number;
-  c: number;
+  row: number;
+  index: number;
 }
 
 export interface SelectionRect {
-  minR: number;
-  minC: number;
-  maxR: number;
-  maxC: number;
+  minRow: number;
+  minIndex: number;
+  maxRow: number;
+  maxIndex: number;
 }
 
 export interface WorkspaceSelection {
@@ -31,10 +52,7 @@ export interface WorkspaceSelection {
 }
 
 export interface TileSource {
-  originR: number;
-  originC: number;
-  tileRows: number;
-  tileCols: number;
+  rect: SelectionRect | null;
   overwriteBlanks: boolean;
   confirmed: boolean;
 }
@@ -52,22 +70,23 @@ export interface YarnDetails {
   patternTags: string;
 }
 
+export const MIN_CAST_ON = 6;
+export const MAX_CAST_ON = 128;
+
 export interface KnitProject {
   version: number;
-  anchor: RowAnchor;
-  rows: number;
-  cols: number;
+  /** Stitches cast on. Seeds the live count for row 0. */
+  castOn: number;
+  /** Free text from the new-pattern wizard: gauge, yarn, sizing. */
+  notes: string;
   knitMode: KnitMode;
+  anchor: RowAnchor;
   yarn: YarnDetails;
-  shapeMask: boolean[][];
-  pattern: PatternCell[][];
-  confirmedShape: boolean;
+  rows: PatternRow[];
   workspaceMode: WorkspaceMode;
   mirrorX: boolean;
   mirrorY: boolean;
   cursor: Cursor;
-  selectedRow: number;
-  rowNotes: Record<string, string>;
   selection: WorkspaceSelection;
   tileSource: TileSource;
   tileApply: TileApplyState;

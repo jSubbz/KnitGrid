@@ -18,7 +18,7 @@ export default function AppShell() {
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const title = useMemo(() => {
-    if (location.pathname === "/create") return "Create Pattern";
+    if (location.pathname === "/create") return "New Pattern";
     if (location.pathname === "/workspace") return "Workspace";
     if (location.pathname === "/library") return "Library";
     if (location.pathname === "/settings") return "Settings";
@@ -137,9 +137,8 @@ export default function AppShell() {
                   type="button"
                   style={menuItemStyle}
                   onClick={() => {
-                    dispatch({ type: "RESET_PROJECT" });
                     closeMenus();
-                    navigate("/workspace");
+                    navigate("/create");
                   }}
                 >
                   New
@@ -268,7 +267,7 @@ export default function AppShell() {
             }}
           >
             <span title={`${STITCH_LIST.length} stitches in the table`}>
-              v0.2.1 · {STITCH_LIST.length} stitches
+              v0.3.0-dev · {STITCH_LIST.length} stitches
             </span>
             <span>{language}</span>
           </div>

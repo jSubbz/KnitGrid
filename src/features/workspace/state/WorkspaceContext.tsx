@@ -6,7 +6,7 @@ import {
   type Dispatch,
   type ReactNode,
 } from "react";
-import { createEmptyProject } from "../../project/projectFactory";
+import { createProject } from "../../project/projectFactory";
 import type { KnitProject } from "../../project/types";
 import {
   workspaceReducer,
@@ -18,7 +18,7 @@ type HistoryAction =
   | { type: "UNDO" }
   | { type: "REDO" }
   | { type: "LOAD_PROJECT"; project: KnitProject }
-  | { type: "RESET_PROJECT" };
+  | { type: "RESET_PROJECT"; castOn?: number; notes?: string };
 
 interface HistoryState {
   past: KnitProject[];
@@ -77,7 +77,7 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
   if (action.type === "RESET_PROJECT") {
     return {
       past: [],
-      present: createEmptyProject(),
+      present: createProject(action.castOn ?? 6, action.notes ?? ""),
       future: [],
     };
   }
@@ -98,7 +98,7 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
   const [history, dispatch] = useReducer(historyReducer, undefined, () => ({
     past: [],
-    present: createEmptyProject(),
+    present: createProject(),
     future: [],
   }));
 

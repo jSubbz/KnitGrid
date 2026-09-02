@@ -1,143 +1,145 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { getStitch } from "../../stitches/stitches";
+import { liveCountFor, rowStatus } from "../../project/rowMath";
 import { useWorkspace } from "../state/WorkspaceContext";
+import type { RowStatus } from "../../project/rowMath";
+
+const CELL = 20;
+
+const STATE_COLOR: Record<RowStatus["state"], string> = {
+  empty: "#6b7280",
+  inProgress: "#93c5fd",
+  complete: "#6ee7b7",
+  short: "#fcd34d",
+  overflow: "#fca5a5",
+  underflow: "#fdba74",
+};
 
 export default function WorkspaceGrid() {
   const { state, dispatch } = useWorkspace();
-  const dragModeRef = useRef<"add" | "remove" | null>(null);
 
-  useEffect(() => {
-    const handleMouseUp = () => {
-      dragModeRef.current = null;
-    };
+  const justify =
+    state.anchor === "left"
+      ? "flex-start"
+      : state.anchor === "center"
+        ? "center"
+        : "flex-end";
 
-    window.addEventListener("mouseup", handleMouseUp);
-    return () => {
-      window.removeEventListener("mouseup", handleMouseUp);
-    };
-  }, []);
-
-  const applyShapeEdit = (r: number, c: number, value: boolean) => {
-    dispatch({ type: "SET_SHAPE_CELL", r, c, value });
-  };
-
-  const cells: ReactNode[] = Array.from({ length: state.rows }, (_, r) =>
-    Array.from({ length: state.cols }, (_, c) => {
-      const isCursor = state.cursor.r === r && state.cursor.c === c;
-      const inShape = state.shapeMask[r][c];
-      const stitch = getStitch(state.pattern[r][c].stitch);
-      // Blank-is-knit is the printed-chart convention, but an editor where the
-      // commonest keystroke draws nothing gives no feedback. Stitches with no
-      // printed glyph get a muted placeholder so worked cells stay visible and
-      // stay distinct from cells that hold no stitch at all.
-      const hasGlyph = stitch.glyph !== "";
-      const glyph = hasGlyph ? stitch.glyph : stitch.id === "k" ? "k" : "";
-
+  // Stored bottom-up and right-to-left in work order; flipped here so the chart
+  // reads the way the knitter sees it.
+  const rows: ReactNode[] = state.rows
+    .map((row, rowIndex) => {
+      const isCurrentRow = state.cursor.row === rowIndex;
+      const status = rowStatus(state, rowIndex, isCurrentRow);
+      const live = liveCountFor(state, rowIndex);
       const rect = state.selection.rect;
-      const isSelected =
-        !!rect &&
-        r >= rect.minR &&
-        r <= rect.maxR &&
-        c >= rect.minC &&
-        c <= rect.maxC;
 
-      const inCapturedMotif =
-        state.tileSource.confirmed &&
-        r >= state.tileSource.originR &&
-        r < state.tileSource.originR + state.tileSource.tileRows &&
-        c >= state.tileSource.originC &&
-        c < state.tileSource.originC + state.tileSource.tileCols;
+      const cells = row.cells
+        .map((cell, index) => {
+          const stitch = getStitch(cell.stitch);
+          const hasGlyph = stitch.glyph !== "";
+          const glyph = hasGlyph ? stitch.glyph : stitch.id === "k" ? "k" : "";
 
-      const dest = state.tileApply.destRect;
-      const inDestination =
-        !!dest &&
-        r >= dest.minR &&
-        r <= dest.maxR &&
-        c >= dest.minC &&
-        c <= dest.maxC;
+          const isCursor = isCurrentRow && state.cursor.index === index;
+          const isSelected =
+            !!rect &&
+            rowIndex >= rect.minRow &&
+            rowIndex <= rect.maxRow &&
+            index >= rect.minIndex &&
+            index <= rect.maxIndex;
+
+          return (
+            <div
+              key={index}
+              title={`${stitch.name} · ${stitch.consumes} in, ${stitch.produces} out`}
+              onMouseDown={(event) => {
+                event.preventDefault();
+                dispatch({ type: "SET_CURSOR", cursor: { row: rowIndex, index } });
+              }}
+              style={{
+                width: CELL,
+                height: CELL,
+                border: "1px solid #cfcfcf",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontSize: 12,
+                boxSizing: "border-box",
+                background: isCursor ? "#dbeafe" : isSelected ? "#bfdbfe" : "#ffffff",
+                color: hasGlyph ? "#111827" : "#c3cad3",
+                outline: isCursor ? "2px solid #2563eb" : "none",
+                outlineOffset: "-2px",
+                userSelect: "none",
+                cursor: "pointer",
+              }}
+            >
+              {glyph}
+            </div>
+          );
+        })
+        .reverse();
+
+      // The caret sits past the last stitch while a row is still being worked.
+      const caret =
+        isCurrentRow && state.cursor.index >= row.cells.length ? (
+          <div
+            key="caret"
+            style={{
+              width: CELL,
+              height: CELL,
+              border: "1px dashed #2563eb",
+              background: "#eff6ff",
+              boxSizing: "border-box",
+            }}
+          />
+        ) : null;
 
       return (
         <div
-          key={`${r}-${c}`}
-          onMouseDown={(event) => {
-            event.preventDefault();
-
-            if (event.button === 2) {
-              dragModeRef.current = "remove";
-              applyShapeEdit(r, c, false);
-              return;
-            }
-
-            if (event.button === 0) {
-              dragModeRef.current = "add";
-              applyShapeEdit(r, c, true);
-            }
-          }}
-          onMouseEnter={() => {
-            if (dragModeRef.current === "remove") {
-              applyShapeEdit(r, c, false);
-            }
-
-            if (dragModeRef.current === "add") {
-              applyShapeEdit(r, c, true);
-            }
-          }}
-          onContextMenu={(event) => {
-            event.preventDefault();
-          }}
-          style={{
-            width: 20,
-            height: 20,
-            border: "1px solid #cfcfcf",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 12,
-            boxSizing: "border-box",
-            background: isCursor
-              ? "#dbeafe"
-              : isSelected
-                ? "#bfdbfe"
-                : inDestination
-                  ? "#fed7aa"
-                  : inCapturedMotif
-                    ? "#d1fae5"
-                    : inShape
-                      ? "#ffffff"
-                      : "#e5e7eb",
-            color: hasGlyph ? "#111827" : "#c3cad3",
-            outline: isCursor
-              ? "2px solid #2563eb"
-              : inCapturedMotif
-                ? "2px solid #10b981"
-                : inDestination
-                  ? "2px solid #f97316"
-                  : "none",
-            outlineOffset: "-2px",
-            userSelect: "none",
-            cursor: "crosshair",
-          }}
+          key={rowIndex}
+          style={{ display: "flex", alignItems: "center", gap: 8, justifyContent: justify }}
         >
-          {inShape ? glyph : ""}
+          <div
+            style={{
+              minWidth: 96,
+              textAlign: "right",
+              fontSize: 11,
+              color: STATE_COLOR[status.state],
+              fontVariantNumeric: "tabular-nums",
+            }}
+          >
+            {status.state === "overflow"
+              ? `over by ${-status.remaining}`
+              : status.state === "short"
+                ? `short · ${status.produced} sts`
+                : status.remaining > 0
+                  ? `${status.remaining} of ${live} left`
+                  : `${status.produced} sts`}
+          </div>
+
+          <div style={{ display: "flex", background: "#cfcfcf", padding: 1 }}>
+            {caret}
+            {cells}
+          </div>
+
+          <div style={{ minWidth: 40, fontSize: 11, color: "#6b7280" }}>
+            {rowIndex + 1}
+          </div>
         </div>
       );
     })
-  ).flat();
+    .reverse();
 
   return (
     <div
       onContextMenu={(event) => event.preventDefault()}
-      style={{
-        display: "grid",
-        gridTemplateColumns: `repeat(${state.cols}, 20px)`,
-        gridTemplateRows: `repeat(${state.rows}, 20px)`,
-        gap: 0,
-        width: "fit-content",
-        background: "#cfcfcf",
-        padding: 1,
-      }}
+      style={{ display: "grid", gap: 2, width: "fit-content" }}
     >
-      {cells}
+      {rows}
+      <div style={{ fontSize: 11, color: "#6b7280", paddingTop: 6 }}>
+        cast on {state.castOn} · {state.rows.length} row
+        {state.rows.length === 1 ? "" : "s"} · {state.knitMode}
+      </div>
     </div>
   );
 }

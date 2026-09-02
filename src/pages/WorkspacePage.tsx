@@ -1,9 +1,11 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
-import { DEFAULT_PALETTE } from "../features/stitches/stitches";
+import { DEFAULT_PALETTE, getStitch } from "../features/stitches/stitches";
+import { liveCountFor, rowStatus } from "../features/project/rowMath";
 import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
+import type { RowAnchor } from "../features/project/types";
 
 function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null {
   const digit =
@@ -17,10 +19,21 @@ function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null 
   return DEFAULT_PALETTE[digit] ?? null;
 }
 
+const buttonStyle: React.CSSProperties = {
+  padding: "6px 10px",
+  borderRadius: 6,
+  border: "1px solid #374151",
+  background: "#1f2937",
+  color: "#e5e7eb",
+  cursor: "pointer",
+  fontSize: 13,
+};
+
 export default function WorkspacePage() {
   const { state, dispatch, canUndo, canRedo } = useWorkspace();
   const navigate = useNavigate();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
+  const [pendingForce, setPendingForce] = useState<string | null>(null);
 
   const hotkeys = loadHotkeyBindings();
 
@@ -28,252 +41,90 @@ export default function WorkspacePage() {
     gridWrapRef.current?.focus();
   }, []);
 
-  const handleTileAcross = () => {
-    if (!state.tileSource.confirmed) {
-      return;
-    }
-
-    const widthToLeftEdge = state.tileSource.originC + state.tileSource.tileCols;
-    const remainder = widthToLeftEdge % state.tileSource.tileCols;
-
-    if (remainder === 0) {
-      dispatch({ type: "TILE_ACROSS", strategy: "partial" });
-      return;
-    }
-
-    const usePartial = window.confirm(
-      "Tile width is not an exact multiple of the motif width.\n\nPress OK for partial fill.\nPress Cancel for truncate."
-    );
-
-    dispatch({
-      type: "TILE_ACROSS",
-      strategy: usePartial ? "partial" : "truncate",
-    });
-  };
-
-  const handleTileUp = () => {
-    if (!state.tileSource.confirmed) {
-      return;
-    }
-
-    const heightToTop = state.tileSource.originR + state.tileSource.tileRows;
-    const remainder = heightToTop % state.tileSource.tileRows;
-
-    if (remainder === 0) {
-      dispatch({ type: "TILE_UP", strategy: "partial" });
-      return;
-    }
-
-    const usePartial = window.confirm(
-      "Tile height is not an exact multiple of the motif height.\n\nPress OK for partial fill.\nPress Cancel for truncate."
-    );
-
-    dispatch({
-      type: "TILE_UP",
-      strategy: usePartial ? "partial" : "truncate",
-    });
-  };
-
-  const handleTileDestination = () => {
-    if (!state.tileSource.confirmed || !state.tileApply.destRect) {
-      return;
-    }
-
-    const destRows =
-      state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1;
-    const destCols =
-      state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1;
-
-    const rowRemainder = destRows % state.tileSource.tileRows;
-    const colRemainder = destCols % state.tileSource.tileCols;
-
-    if (rowRemainder === 0 && colRemainder === 0) {
-      dispatch({ type: "TILE_DESTINATION", strategy: "partial" });
-      return;
-    }
-
-    const usePartial = window.confirm(
-      "Destination box is not an exact multiple of the motif size.\n\nPress OK for partial fill.\nPress Cancel for truncate."
-    );
-
-    dispatch({
-      type: "TILE_DESTINATION",
-      strategy: usePartial ? "partial" : "truncate",
-    });
-  };
-
-  const infoRows = [
-    { name: "Undo", description: "Step backward", hotkey: hotkeys.undo },
-    { name: "Redo", description: "Step forward", hotkey: hotkeys.redo },
-    { name: "Add cells", description: "Add shape cells", hotkey: "Left-drag" },
-    { name: "Remove cells", description: "Remove shape cells", hotkey: "Right-drag" },
-    { name: "Paint", description: "Paint and advance", hotkey: "0–5 / Num 0–5" },
-    { name: "Erase", description: "Back up and clear", hotkey: "Del / Backspace" },
-    { name: "Next row", description: "Jump to row start above", hotkey: hotkeys.nextRow },
-    { name: "Move cursor", description: "Move current cursor", hotkey: "Arrow keys" },
-    { name: "Select box", description: "Make selection rectangle", hotkey: "Shift + arrows" },
-    { name: "Capture motif", description: "Store selected motif", hotkey: hotkeys.captureMotif },
-    { name: "Set destination", description: "Store selected destination", hotkey: hotkeys.setDestination },
-    { name: "Tile across", description: "Fill leftward", hotkey: "Button" },
-    { name: "Tile up", description: "Fill upward", hotkey: "Button" },
-    { name: "Tile destination", description: "Fill destination box", hotkey: "Button" },
-  ];
+  const current = rowStatus(state, state.cursor.row, true);
+  const live = liveCountFor(state, state.cursor.row);
 
   return (
-    <main style={{ display: "grid", gap: 16 }}>
-      <div style={{ display: "flex", justifyContent: "center" }}>
-        <button type="button" onClick={() => navigate("/")}>
+    <main style={{ display: "grid", gap: 16, color: "#e5e7eb" }}>
+      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+        <button type="button" style={buttonStyle} onClick={() => navigate("/")}>
           Home
+        </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          disabled={!canUndo}
+          onClick={() => dispatch({ type: "UNDO" })}
+        >
+          Undo
+        </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          disabled={!canRedo}
+          onClick={() => dispatch({ type: "REDO" })}
+        >
+          Redo
+        </button>
+
+        <span style={{ width: 12 }} />
+
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() =>
+            dispatch({
+              type: "SET_KNIT_MODE",
+              mode: state.knitMode === "flat" ? "round" : "flat",
+            })
+          }
+        >
+          {state.knitMode === "flat" ? "Flat" : "In the round"}
+        </button>
+
+        {(["right", "center", "left"] as RowAnchor[]).map((anchor) => (
+          <button
+            key={anchor}
+            type="button"
+            style={{
+              ...buttonStyle,
+              background: state.anchor === anchor ? "#1d4ed8" : "#1f2937",
+            }}
+            onClick={() => dispatch({ type: "SET_ANCHOR", anchor })}
+          >
+            {anchor}
+          </button>
+        ))}
+
+        <span style={{ width: 12 }} />
+
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}
+        >
+          Capture motif
+        </button>
+        <button
+          type="button"
+          style={buttonStyle}
+          onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}
+        >
+          Set destination
         </button>
       </div>
 
-      <section
-        style={{
-          display: "grid",
-          gridTemplateColumns: "minmax(0, 1fr) 320px",
-          gap: 16,
-          alignItems: "start",
-        }}
-      >
-        <div style={{ display: "grid", gap: 12, justifyItems: "start" }}>
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => dispatch({ type: "UNDO" })} disabled={!canUndo}>
-              Undo
-            </button>
-            <button type="button" onClick={() => dispatch({ type: "REDO" })} disabled={!canRedo}>
-              Redo
-            </button>
-          </div>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_X" })}>
-              Mirror X: {state.mirrorX ? "On" : "Off"}
-            </button>
-            <button type="button" onClick={() => dispatch({ type: "TOGGLE_MIRROR_Y" })}>
-              Mirror Y: {state.mirrorY ? "On" : "Off"}
-            </button>
-          </div>
-
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button type="button" onClick={() => dispatch({ type: "ADD_COL" })}>
-              + Col
-            </button>
-            <button type="button" onClick={() => dispatch({ type: "REMOVE_COL" })}>
-              - Col
-            </button>
-            <button type="button" onClick={() => dispatch({ type: "ADD_ROW" })}>
-              + Row
-            </button>
-            <button type="button" onClick={() => dispatch({ type: "REMOVE_ROW" })}>
-              - Row
-            </button>
-          </div>
-
-          <div
-            style={{
-              display: "grid",
-              gap: 8,
-              padding: 10,
-              border: "1px solid #374151",
-              borderRadius: 10,
-              background: "#111827",
-            }}
-          >
-            <div style={{ fontWeight: 700, color: "#f9fafb" }}>Motif tools</div>
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button type="button" onClick={() => dispatch({ type: "CLEAR_SELECTION" })}>
-                Clear Selection
-              </button>
-              <button type="button" onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}>
-                Capture Motif
-              </button>
-              <button type="button" onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}>
-                Set Destination
-              </button>
-              <button type="button" onClick={() => dispatch({ type: "CLEAR_DESTINATION" })}>
-                Clear Destination
-              </button>
-            </div>
-
-            <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-              <button
-                type="button"
-                onClick={handleTileAcross}
-                disabled={!state.tileSource.confirmed}
-              >
-                Tile Across
-              </button>
-              <button
-                type="button"
-                onClick={handleTileUp}
-                disabled={!state.tileSource.confirmed}
-              >
-                Tile Up
-              </button>
-              <button
-                type="button"
-                onClick={handleTileDestination}
-                disabled={!state.tileSource.confirmed || !state.tileApply.destRect}
-              >
-                Tile Destination
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <aside
-          style={{
-            border: "1px solid #374151",
-            borderRadius: 10,
-            background: "#111827",
-            color: "#e5e7eb",
-            padding: 14,
-            display: "grid",
-            gap: 10,
-          }}
-        >
-          <div style={{ fontWeight: 700, color: "#f9fafb" }}>Status</div>
-
-          <div style={{ display: "grid", gap: 4 }}>
-            <div>
-              <strong>Grid:</strong> {state.cols} × {state.rows}
-            </div>
-            <div>
-              <strong>Cursor:</strong> row {state.rows - state.cursor.r}, col {state.cols - state.cursor.c}
-            </div>
-            <div>
-              <strong>Motif:</strong>{" "}
-              {state.tileSource.confirmed
-                ? `${state.tileSource.tileCols} × ${state.tileSource.tileRows} captured`
-                : "not captured"}
-            </div>
-            <div>
-              <strong>Destination:</strong>{" "}
-              {state.tileApply.destRect
-                ? `${state.tileApply.destRect.maxC - state.tileApply.destRect.minC + 1} × ${
-                    state.tileApply.destRect.maxR - state.tileApply.destRect.minR + 1
-                  } set`
-                : "not set"}
-            </div>
-            <div>
-              <strong>Mirror X:</strong> {state.mirrorX ? "On" : "Off"}
-            </div>
-            <div>
-              <strong>Mirror Y:</strong> {state.mirrorY ? "On" : "Off"}
-            </div>
-          </div>
-        </aside>
-      </section>
+      <div style={{ fontSize: 13, color: "#94a3b8" }}>
+        Row {state.cursor.row + 1} · {current.consumed} of {live} stitches worked ·{" "}
+        {current.produced} produced
+      </div>
 
       <div
         ref={gridWrapRef}
         tabIndex={0}
-        onMouseDownCapture={() => {
-          gridWrapRef.current?.focus();
-        }}
+        onClick={() => gridWrapRef.current?.focus()}
         onKeyDown={(event) => {
-          const hotkey = eventToHotkey(event);
+          const hotkey = eventToHotkey(event.nativeEvent);
 
           if (hotkey === hotkeys.undo) {
             event.preventDefault();
@@ -287,39 +138,25 @@ export default function WorkspacePage() {
             return;
           }
 
-          const stitch = keyToStitch(event);
-
-          const shouldExitMirrorMode =
-            !!stitch ||
-            event.key === "Backspace" ||
-            event.key === "Delete" ||
-            hotkey === hotkeys.nextRow;
-
-          if (shouldExitMirrorMode && (state.mirrorX || state.mirrorY)) {
-            dispatch({ type: "CLEAR_MIRRORS" });
-          }
-
-          if (event.shiftKey && event.key === "ArrowLeft") {
+          if (event.shiftKey && event.key.startsWith("Arrow")) {
             event.preventDefault();
-            dispatch({ type: "EXTEND_SELECTION", dir: "left" });
+            const dir = event.key.replace("Arrow", "").toLowerCase() as
+              | "left"
+              | "right"
+              | "up"
+              | "down";
+            dispatch({ type: "EXTEND_SELECTION", dir });
             return;
           }
 
-          if (event.shiftKey && event.key === "ArrowRight") {
+          if (event.key.startsWith("Arrow")) {
             event.preventDefault();
-            dispatch({ type: "EXTEND_SELECTION", dir: "right" });
-            return;
-          }
-
-          if (event.shiftKey && event.key === "ArrowUp") {
-            event.preventDefault();
-            dispatch({ type: "EXTEND_SELECTION", dir: "up" });
-            return;
-          }
-
-          if (event.shiftKey && event.key === "ArrowDown") {
-            event.preventDefault();
-            dispatch({ type: "EXTEND_SELECTION", dir: "down" });
+            const dir = event.key.replace("Arrow", "").toLowerCase() as
+              | "left"
+              | "right"
+              | "up"
+              | "down";
+            dispatch({ type: "MOVE_CURSOR", dir });
             return;
           }
 
@@ -335,9 +172,25 @@ export default function WorkspacePage() {
             return;
           }
 
+          if (hotkey === hotkeys.nextRow) {
+            event.preventDefault();
+            dispatch({ type: "NEXT_ROW" });
+            return;
+          }
+
+          const stitch = keyToStitch(event);
           if (stitch) {
             event.preventDefault();
+            const before = state;
             dispatch({ type: "PAINT_AND_ADVANCE", stitch });
+            // The reducer refuses a stitch that would over-consume the row.
+            // Nothing changes, so offer the override rather than failing silently.
+            const wouldNotFit =
+              before.rows[before.cursor.row] &&
+              rowStatus(before, before.cursor.row, true).consumed +
+                getStitch(stitch).consumes >
+                liveCountFor(before, before.cursor.row);
+            if (wouldNotFit) setPendingForce(stitch);
             return;
           }
 
@@ -347,95 +200,86 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (event.key === "ArrowLeft") {
+          if (event.key === "Escape") {
             event.preventDefault();
-            dispatch({ type: "MOVE_CURSOR", dir: "left" });
-            return;
-          }
-
-          if (event.key === "ArrowRight") {
-            event.preventDefault();
-            dispatch({ type: "MOVE_CURSOR", dir: "right" });
-            return;
-          }
-
-          if (event.key === "ArrowUp") {
-            event.preventDefault();
-            dispatch({ type: "MOVE_CURSOR", dir: "up" });
-            return;
-          }
-
-          if (event.key === "ArrowDown") {
-            event.preventDefault();
-            dispatch({ type: "MOVE_CURSOR", dir: "down" });
-            return;
-          }
-
-          if (hotkey === hotkeys.nextRow) {
-            event.preventDefault();
-            dispatch({ type: "NEXT_ROW_START" });
+            dispatch({ type: "CLEAR_SELECTION" });
           }
         }}
         style={{
-          width: "fit-content",
-          border: "1px solid #374151",
           padding: 12,
+          background: "#f8fafc",
           borderRadius: 8,
-          background: "#111827",
           outline: "none",
+          width: "fit-content",
         }}
       >
         <WorkspaceGrid />
       </div>
 
-      <section
-        style={{
-          border: "1px solid #374151",
-          borderRadius: 8,
-          overflow: "hidden",
-          background: "#111827",
-          color: "#e5e7eb",
-          maxWidth: 960,
-          fontSize: 14,
-        }}
-      >
+      <div style={{ fontSize: 12, color: "#6b7280" }}>
+        {DEFAULT_PALETTE.map((id, digit) => (
+          <span key={id} style={{ marginRight: 12 }}>
+            <strong style={{ color: "#94a3b8" }}>{digit}</strong> {getStitch(id).abbr}
+          </span>
+        ))}
+      </div>
+
+      {pendingForce && (
         <div
           style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
             display: "grid",
-            gridTemplateColumns: "170px 1fr 170px",
-            background: "#1f2937",
-            fontWeight: 600,
-            borderBottom: "1px solid #374151",
+            placeItems: "center",
+            zIndex: 60,
           }}
         >
-          <div style={{ padding: "8px 10px" }}>Action</div>
-          <div style={{ padding: "8px 10px" }}>Description</div>
-          <div style={{ padding: "8px 10px" }}>Hotkey</div>
-        </div>
-
-        {infoRows.map((row, index) => (
           <div
-            key={row.name}
             style={{
+              width: "min(420px, 90%)",
               display: "grid",
-              gridTemplateColumns: "170px 1fr 170px",
-              borderBottom: index === infoRows.length - 1 ? "none" : "1px solid #1f2937",
-              textAlign: "left",
-              whiteSpace: "nowrap",
+              gap: 14,
+              padding: 20,
+              borderRadius: 12,
+              border: "1px solid #374151",
+              background: "#111827",
             }}
           >
-            <div style={{ padding: "8px 10px", color: "#f9fafb", fontWeight: 500 }}>
-              {row.name}
-            </div>
-            <div style={{ padding: "8px 10px", color: "#d1d5db", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {row.description}
-            </div>
-            <div style={{ padding: "8px 10px", fontFamily: "monospace", color: "#93c5fd" }}>
-              {row.hotkey}
+            <h3 style={{ margin: 0, color: "#f8fafc" }}>That does not fit</h3>
+            <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14 }}>
+              {getStitch(pendingForce).name} takes{" "}
+              {getStitch(pendingForce).consumes} stitches, and this row has{" "}
+              {current.remaining} left. You can place it anyway; the row will be
+              flagged as not closing.
+            </p>
+            <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
+              <button
+                type="button"
+                style={buttonStyle}
+                onClick={() => setPendingForce(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                style={{ ...buttonStyle, background: "#b45309" }}
+                onClick={() => {
+                  dispatch({
+                    type: "PAINT_AND_ADVANCE",
+                    stitch: pendingForce,
+                    force: true,
+                  });
+                  setPendingForce(null);
+                  gridWrapRef.current?.focus();
+                }}
+              >
+                Place anyway
+              </button>
             </div>
           </div>
-        ))}
-      </section>
+        </div>
+      )}
     </main>
   );
 }

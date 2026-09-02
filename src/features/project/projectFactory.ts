@@ -1,25 +1,26 @@
 import { DEFAULT_STITCH } from "../stitches/stitches";
-import type { KnitProject, PatternCell } from "./types";
+import { createRow } from "./rowMath";
+import { MAX_CAST_ON, MIN_CAST_ON } from "./types";
+import type { KnitProject, PatternRow } from "./types";
 
-function createShapeMask(rows: number, cols: number, fill = true): boolean[][] {
-  return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => fill)
-  );
+export function clampCastOn(value: number): number {
+  if (!Number.isFinite(value)) return MIN_CAST_ON;
+  return Math.max(MIN_CAST_ON, Math.min(MAX_CAST_ON, Math.floor(value)));
 }
 
-function createPattern(rows: number, cols: number): PatternCell[][] {
-  return Array.from({ length: rows }, () =>
-    Array.from({ length: cols }, () => ({ stitch: DEFAULT_STITCH }))
-  );
-}
+/**
+ * A new project starts with one empty row waiting on the cast-on stitches.
+ * Nothing is pre-allocated: rows appear as they are worked.
+ */
+export function createProject(castOn = 6, notes = ""): KnitProject {
+  const rows: PatternRow[] = [createRow()];
 
-export function createEmptyProject(rows = 40, cols = 40): KnitProject {
   return {
-    version: 2,
-    anchor: "right",
-    rows,
-    cols,
+    version: 3,
+    castOn: clampCastOn(castOn),
+    notes,
     knitMode: "flat",
+    anchor: "right",
     yarn: {
       stitchesPerInch: "",
       rowsPerInch: "",
@@ -27,15 +28,11 @@ export function createEmptyProject(rows = 40, cols = 40): KnitProject {
       yarnDescriptors: "",
       patternTags: "",
     },
-    shapeMask: createShapeMask(rows, cols, true),
-    pattern: createPattern(rows, cols),
-    confirmedShape: false,
+    rows,
     workspaceMode: "design",
     mirrorX: false,
     mirrorY: false,
-    cursor: { r: rows - 1, c: cols - 1 },
-    selectedRow: rows - 1,
-    rowNotes: {},
+    cursor: { row: 0, index: 0 },
     selection: {
       active: false,
       role: "source",
@@ -43,17 +40,14 @@ export function createEmptyProject(rows = 40, cols = 40): KnitProject {
       focus: null,
       rect: null,
     },
-    tileSource: {
-      originR: 0,
-      originC: 0,
-      tileRows: 3,
-      tileCols: 3,
-      overwriteBlanks: true,
-      confirmed: false,
-    },
-    tileApply: {
-      mode: "across",
-      destRect: null,
-    },
+    tileSource: { rect: null, overwriteBlanks: true, confirmed: false },
+    tileApply: { mode: "dest", destRect: null },
   };
 }
+
+/** Kept for callers that only want a blank chart at the default cast-on. */
+export function createEmptyProject(): KnitProject {
+  return createProject();
+}
+
+export { DEFAULT_STITCH };
