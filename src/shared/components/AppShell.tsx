@@ -267,7 +267,7 @@ export default function AppShell() {
             }}
           >
             <span title={`${STITCH_LIST.length} stitches in the table`}>
-              v0.4.1-dev · {STITCH_LIST.length} stitches
+              v0.4.2-dev · {STITCH_LIST.length} stitches
             </span>
             <span>{language}</span>
           </div>
