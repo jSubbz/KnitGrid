@@ -95,8 +95,8 @@ export default function WorkspacePage() {
         <span style={{ fontSize: 12, color: "#6b7280", paddingLeft: 4 }}>Align</span>
         {(
           [
-            ["right", "Right"],
             ["center", "Centre"],
+            ["right", "Right"],
             ["left", "Left"],
           ] as [RowAnchor, string][]
         ).map(([value, label]) => (

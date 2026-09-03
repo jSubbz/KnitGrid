@@ -6,11 +6,13 @@ import {
   useMemo,
   useReducer,
   useRef,
+  useState,
   type Dispatch,
   type ReactNode,
 } from "react";
 import { createProject } from "../../project/projectFactory";
 import { logAction } from "../../devlog/devlog";
+import { loadWorking, saveWorking } from "../../project/projectStore";
 import type { KnitProject } from "../../project/types";
 import {
   workspaceReducer,
@@ -35,6 +37,9 @@ interface WorkspaceContextValue {
   dispatch: Dispatch<HistoryAction>;
   canUndo: boolean;
   canRedo: boolean;
+  /** Set when the working project came from a library entry. */
+  savedAs: { id: string; name: string } | null;
+  setSavedAs: (savedAs: { id: string; name: string } | null) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -100,11 +105,22 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
 }
 
 export function WorkspaceProvider({ children }: { children: ReactNode }) {
+  // Charting picks up where it was left. A reload or a closed tab should not
+  // cost an afternoon's work, so the working project is restored before the
+  // first render rather than starting blank and replacing it.
   const [history, dispatch] = useReducer(historyReducer, undefined, () => ({
     past: [],
-    present: createProject(),
+    present: loadWorking()?.project ?? createProject(),
     future: [],
   }));
+
+  const [savedAs, setSavedAs] = useState<{ id: string; name: string } | null>(
+    () => loadWorking()?.savedAs ?? null
+  );
+
+  useEffect(() => {
+    saveWorking({ project: history.present, savedAs: savedAs ?? undefined });
+  }, [history.present, savedAs]);
 
   // The wrapper below needs the state a dispatch will be applied to. Effects
   // flush between input events, so this is current by the time the next
@@ -141,8 +157,10 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       dispatch: logged,
       canUndo: history.past.length > 0,
       canRedo: history.future.length > 0,
+      savedAs,
+      setSavedAs,
     }),
-    [history, logged]
+    [history, logged, savedAs]
   );
 
   return (

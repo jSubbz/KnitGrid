@@ -63,7 +63,7 @@ export default function HomePage() {
 
             <button
               type="button"
-              onClick={() => navigate("/library")}
+              onClick={() => navigate("/patterns")}
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
@@ -74,7 +74,7 @@ export default function HomePage() {
                 cursor: "pointer",
               }}
             >
-              Browse Library
+              My Patterns
             </button>
           </div>
         </div>

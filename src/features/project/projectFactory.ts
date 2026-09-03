@@ -20,7 +20,7 @@ export function createProject(castOn = 6, notes = ""): KnitProject {
     castOn: clampCastOn(castOn),
     notes,
     knitMode: "flat",
-    anchor: "right",
+    anchor: "center",
     yarn: {
       stitchesPerInch: "",
       rowsPerInch: "",

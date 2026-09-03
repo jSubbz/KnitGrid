@@ -34,7 +34,7 @@ export default function CreatePatternPage() {
   const [castOn, setCastOn] = useState("6");
   const [notes, setNotes] = useState("");
   const [knitMode, setKnitMode] = useState<KnitMode>("flat");
-  const [anchor, setAnchor] = useState<RowAnchor>("right");
+  const [anchor, setAnchor] = useState<RowAnchor>("center");
 
   const parsed = Number(castOn);
   const valid =
@@ -115,8 +115,8 @@ export default function CreatePatternPage() {
         <div style={{ display: "flex", gap: 8 }}>
           {(
             [
-              ["right", "Right", "Rows line up where knitting starts"],
               ["center", "Centre", "Shaping spreads evenly to both sides"],
+              ["right", "Right", "Rows line up where knitting starts"],
               ["left", "Left", "Rows line up at the far edge"],
             ] as [RowAnchor, string, string][]
           ).map(([value, label, hint]) => (

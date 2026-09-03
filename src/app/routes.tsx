@@ -3,7 +3,8 @@ import AppShell from "../shared/components/AppShell";
 import HomePage from "../pages/HomePage";
 import CreatePatternPage from "../pages/CreatePatternPage";
 import WorkspacePage from "../pages/WorkspacePage";
-import LibraryPage from "../pages/LibraryPage";
+import MyPatternsPage from "../pages/MyPatternsPage";
+import PrintPage from "../pages/PrintPage";
 import SettingsPage from "../pages/SettingsPage";
 
 // Pages serves the app from /<repo>/, so the router has to be told where the
@@ -19,7 +20,8 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "create", element: <CreatePatternPage /> },
       { path: "workspace", element: <WorkspacePage /> },
-      { path: "library", element: <LibraryPage /> },
+      { path: "patterns", element: <MyPatternsPage /> },
+      { path: "print", element: <PrintPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],
   },

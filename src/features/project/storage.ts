@@ -160,7 +160,7 @@ export function parseProjectJson(text: string): KnitProject {
     anchor:
       raw.anchor === "left" || raw.anchor === "center" || raw.anchor === "right"
         ? (raw.anchor as RowAnchor)
-        : "right",
+        : "center",
     yarn: isObject(raw.yarn)
       ? {
           stitchesPerInch: String(raw.yarn.stitchesPerInch ?? ""),
