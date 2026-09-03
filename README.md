@@ -1,85 +1,100 @@
 # KnitGrid
 
-A knitting chart editor. It counts your stitches, and flags the rows that
-don't add up.
+A knitting chart editor. It counts your stitches, and flags the rows that don't add up.
 
-You cast on, type a row, and the next row is worked out from what that row
-produced. Increases widen the chart, decreases narrow it. There is no grid to
-set up first, because the outline of the piece comes out of the knitting, the
-same way it does on the needles.
+You cast on, type a row, and the next row is worked out from what that row produced. Increases widen the chart, decreases narrow it. There is no grid to set up first.
 
 ![The KnitGrid workspace: a chart worked upward from an eight-stitch cast-on, with paired edge increases, a decrease row, and the row in progress showing what it still owes.](docs/workspace.png)
 
-**Status: early development (v0.4).** It is usable for charting. Several things
-listed under [Not done yet](#not-done-yet) are missing.
+**Status: early development (v0.7).** It is usable for charting. Several things listed under [What's next](#whats-next) are missing.
 
 ## Why
 
-Most chart tools hand you a fixed grid and let you draw symbols on it. The
-symbols do not mean anything to the tool, so it cannot tell you that a row does
-not close, or that a decrease has nothing left to eat.
+**No account, no server, no cloud.**
 
-KnitGrid stores what each stitch actually does: how many live stitches it takes
-from the row below, and how many it hands to the row above. Two integers per
-stitch turn out to be enough to derive the width of every row, to catch a row
-whose arithmetic does not work, and to know where a short row turned.
+Your patterns are files on your computer. A saved pattern is a self-contained page - open it in a browser to read or print it, or hand that file to another knitter and it works the same for them.
 
-## Running it
+KnitGrid never sees any of it. There is nowhere for it to go: no sign-up, no sync, nothing of yours on someone else's machine. That is also why there is nothing to pay for, and no reason this should stop working in ten years if nobody is minding it.
+
+**There is no AI in the program.** Nothing here calls a model, watches what you chart, or offers to finish your row. It is designed as a quiet tool that does what you tell it and nothing else.
+
+## Charting
+
+Start a new pattern, say how many stitches you are casting on, and type.
+
+The chart reads the way knitting does: bottom to top, right to left. Stitches go in from the number keys or the numpad, and every key has a button underneath the chart, so it works on a phone where there is no keyboard to bring up.
+
+| Key | | Stitch |
+|---|---|---|
+| `0` | K | knit |
+| `1` | P | purl |
+| `2` | K2TOG | knit two together |
+| `3` | SSK | slip slip knit |
+| `4` | M1L | make one left |
+| `5` | M1R | make one right |
+| `6` | YO | yarn over |
+| `7` | LLI | left lifted increase |
+| `8` | RLI | right lifted increase |
+| `9` | SL | slip |
+
+Symbols slant the way the stitch leans, with a plus for an increase and a minus for a decrease. Lifted increases carry a foot at the base, because they are picked up out of the fabric below rather than made from the bar between stitches. More stitches are coming - the cable and short-row symbols are not there yet.
+
+**Space** works to the last stitch, where shaping usually goes. Press it again to take the last one. So the standard edge increase
+
+```
+k1, m1r, knit to last stitch, m1l, k1
+```
+
+is `0` `5` Space `4` `0` - five presses regardless of row length.
+
+**Enter** starts the next row. It is refused while stitches are still live, because turning early reshapes everything above and should not happen by accident. **Turn work** is the button for doing it on purpose; designed for german short rows, and is still in the to-do list.
+
+Increases eat nothing. A make-one or a yarn over adds a stitch without using one up, which is why a row can hold more symbols than it has live stitches, and why the count in the margin tells you what the row still owes rather than how many symbols are in it. Each row shows how many stitches it produced once it closes, and goes amber if it does not add up.
+
+**Designing / Knitting** switches between the chart as drawn and the chart as worked. In Knitting mode on a flat piece, wrong-side rows reverse and show the stitch you actually work, so a charted knit shows as a purl.
+
+## Saving and sharing
+
+**Save pattern** produces one file. It holds a printable copy of your chart and the written instructions, and underneath those, data you never see that describes the pattern exactly. **Load pattern** reads that data back and reopens the pattern in a new session, exactly as you left it.
+
+That is the only file, unless you tick **Download only written instructions** on the print screen. That one is plain text, for reading and sending on. It cannot be loaded back - the pattern data is not in it.
+
+## Live
+
+**[jsubbz.github.io/KnitGrid](https://jsubbz.github.io/KnitGrid/)** - the program is live at this link. If you would rather have a local copy on your machine, [For developers](#for-developers) has the details on getting it running.
+
+## Testing tools
+
+The **Flag** and **Save log** buttons record what happened while charting, for tracking down bugs. They are here while the program is still being built and will come off the toolbar before release - most likely reappearing behind a developer option in Settings, so anyone who hits a bug can still capture it.
+
+## What's next
+
+[TODO.md](TODO.md) has the working list. The short version: settings, language support, dark and light modes, motif tiling, better row tracking while knitting, and more stitches - the double stitch and German short rows in particular.
+
+## For developers
+
+**Most people do not need this section.** KnitGrid runs in a browser at the link above with nothing to install. What follows is for running it from source, and assumes you are comfortable with git and Node.
+
+<details>
+<summary>Running from source</summary>
 
 Requires Node 20 or newer.
 
 ```bash
+git clone https://github.com/jSubbz/KnitGrid.git
+cd KnitGrid
 npm install
 npm run dev
 ```
 
-Then open the URL it prints. `npm run build` produces a static site in `dist/`.
+`npm run build` produces a static site in `dist/`.
 
-## Charting
+</details>
 
-**New pattern** asks for a cast-on between 6 and 128 stitches, whether the piece
-is worked flat or in the round, and optional notes for gauge, yarn and sizing.
+<details>
+<summary>The stitch table</summary>
 
-The chart reads the way knitting does: bottom to top, right to left. Rows are
-entered from the number row or the numpad.
-
-| key | stitch | | key | stitch |
-|---|---|---|---|---|
-| `0` | knit | | `5` | make one right |
-| `1` | purl | | `6` | yarn over |
-| `2` | knit two together | | `7` | left lifted increase |
-| `3` | slip slip knit | | `8` | right lifted increase |
-| `4` | make one left | | `9` | slip |
-
-Each row shows how many stitches it still owes, and how many it produced once
-it closes. A row stays current until you leave it, the way the work stays on the
-needle until you turn it.
-
-- **Space** works to the last stitch, repeating whatever the row is already
-  working, so a purl row fills with purls. It stops one short because that is
-  where shaping goes; pressing it again takes the last stitch. So a plain row is
-  Space, Space, Enter, and the standard edge increase
-
-  ```
-  k1, m1r, knit to last stitch, m1l, k1
-  ```
-
-  is `0` `5` Space `4` `0` Enter — six keystrokes at any width.
-- **Enter** starts the next row. On a finished row an increase simply appends,
-  because the row has not gone anywhere; a stitch that needs a live stitch rolls
-  onto the next row by itself, since there is nothing here for it to eat.
-- **Turn work** ends a row early, making it a short row. Pressing Enter on an
-  unfinished row is refused, because turning reshapes everything above it and
-  should not fall out of a stray keystroke.
-- A stitch that would consume more than the row has left is refused, with the
-  option to place it anyway. The row is then flagged as not closing.
-- **Designing / Knitting** switches between the chart as designed and the chart
-  as worked. In Knitting mode on a flat piece, wrong-side rows reverse direction
-  and show the stitch you actually work, so a charted knit shows as a purl.
-
-## The stitch table
-
-`src/features/stitches/stitches.json` is the whole domain model:
+`src/features/stitches/stitches.json` is the domain model:
 
 ```json
 { "id": "k2tog", "abbr": "k2tog", "name": "knit two together",
@@ -87,46 +102,12 @@ needle until you turn it.
   "lean": "right", "wsCounterpart": "p2tog" }
 ```
 
-It is data rather than code so that other tools can read the same table instead
-of reimplementing it. `lean` drives the drawn glyph — the stroke slants the way
-the stitch leans, with a plus for increases and a minus for decreases.
+`consumes` and `produces` are what the whole program is built on - the width of every row, whether a row closes, and where a short row turned all fall out of those two numbers. `lean` drives the drawn symbol.
 
-Entries without a `wsCounterpart` are unresearched, not symmetric by default;
-not every stitch has an opposite. The `pending` section lists stitches the table
-needs to grow to hold, and what each one needs from the schema first — the
-double stitch is the notable one, since it carries state across rows and so
-cannot be described by two integers.
+It is data rather than code so other tools can read the same table instead of reimplementing it. Entries without a `wsCounterpart` are unresearched, not symmetric by default. The `pending` section lists stitches the table needs to grow to hold and what each needs from the schema first.
 
-## Session logs
-
-Under `npm run dev`, the workspace records every action and the state of the
-chart after it, including actions that were refused. **Flag** annotates the
-moment something looks wrong; **Save log** writes it to `logs/`. The dev server
-does the writing, since a page cannot choose where a file goes.
-
-## Not done yet
-
-The fuller list, with reasoning, is in [TODO.md](TODO.md).
-
-- Motif tiling is stubbed. Repeating a motif that changes a row's stitch count
-  changes every row above it, and which repair to apply is the knitter's call,
-  so it waits on a dialog that offers the choice.
-- Stitches are drawn in square cells. The intended rendering draws each stitch
-  as a shape spanning what it consumes at the bottom and what it produces at the
-  top, so decreases visibly converge and increases fan out.
-- Double stitch and German short rows.
-- Saved projects are files on disk; there is no library listing them.
-- Settings is a placeholder. The number palette is the obvious thing to make
-  configurable there.
-- No test suite. The row arithmetic in `src/features/project/rowMath.ts` and the
-  project file parser are where one would pay for itself first.
-
-## Demo
-
-The build is a static site, deployed to GitHub Pages by
-[.github/workflows/deploy.yml](.github/workflows/deploy.yml) on every push to
-`main`. Enable it once under **Settings → Pages → Source → GitHub Actions**.
+</details>
 
 ## Licence
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
