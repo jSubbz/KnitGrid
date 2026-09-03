@@ -1,0 +1,144 @@
+{
+  "code": "fr",
+  "name": "Français",
+  "reviewed": false,
+  "ui": {
+    "file": "Fichier",
+    "new": "Nouveau",
+    "savePattern": "Enregistrer le modèle...",
+    "loadPattern": "Ouvrir un modèle...",
+    "print": "Imprimer...",
+    "edit": "Édition",
+    "hotkeys": "Raccourcis",
+    "settings": "Paramètres",
+    "languages": "Langues",
+    "info": "Infos",
+    "gettingStarted": "Premiers pas",
+    "about": "À propos de KnitGrid",
+    "submitFeedback": "Envoyer un commentaire",
+    "home": "Accueil",
+    "undo": "Annuler",
+    "redo": "Rétablir",
+    "flat": "En rangs",
+    "circular": "En rond",
+    "left": "Gauche",
+    "centre": "Centre",
+    "right": "Droite",
+    "designing": "Création",
+    "knitting": "Tricot",
+    "toLastStitch": "Jusqu'à la dernière maille",
+    "erase": "Effacer",
+    "nextRow": "Rang suivant",
+    "turnWork": "Tourner",
+    "captureMotif": "Capturer le motif",
+    "setDestination": "Définir la destination",
+    "patternName": "Nom du modèle",
+    "untitled": "Sans titre",
+    "createNewPattern": "Créer un nouveau modèle",
+    "stitchesToCastOn": "Mailles à monter",
+    "castOnRange": "{min} à {max} mailles",
+    "visualAlignment": "Alignement",
+    "alignmentHint": "L'alignement peut être changé à tout moment dans l'espace de travail.",
+    "notes": "Notes",
+    "notesPlaceholder": "Échantillon, laine, taille d'aiguilles, tailles.",
+    "startCreating": "Commencer",
+    "cancel": "Annuler",
+    "key": "Légende",
+    "written": "Écrit",
+    "blankIsKnit": "vide - endroit",
+    "shortRowMark": "rang raccourci, tourné avant la fin",
+    "settings.title": "Paramètres",
+    "settings.appearance": "Apparence",
+    "settings.theme": "Thème",
+    "settings.themeSystem": "Système",
+    "settings.themeLight": "Clair",
+    "settings.themeDark": "Sombre",
+    "settings.language": "Langue",
+    "settings.languageSystem": "Suivre le navigateur"
+  },
+  "pattern": {
+    "castOn": "Monter {count} mailles.",
+    "workedFlat": "Tricoté en rangs.",
+    "workedRound": "Tricoté en rond.",
+    "row": "Rang",
+    "round": "Tour",
+    "stitchCount": "({count} m)",
+    "turn": "Tourner.",
+    "notesHeading": "Notes",
+    "repeat": "({unit}) x{times}",
+    "separator": ", ",
+    "countedStitch": "{count} m {abbr}"
+  },
+  "stitches": {
+    "k": {
+      "abbr": "end",
+      "name": "maille endroit"
+    },
+    "p": {
+      "abbr": "env",
+      "name": "maille envers"
+    },
+    "sl": {
+      "abbr": "gl",
+      "name": "maille glissée"
+    },
+    "yo": {
+      "abbr": "j",
+      "name": "jeté"
+    },
+    "m1": {
+      "abbr": "aug",
+      "name": "augmentation"
+    },
+    "m1l": {
+      "abbr": "aug G",
+      "name": "augmentation intercalaire à gauche"
+    },
+    "m1r": {
+      "abbr": "aug D",
+      "name": "augmentation intercalaire à droite"
+    },
+    "lli": {
+      "abbr": "aug levée G",
+      "name": "augmentation levée gauche, brin gauche de la maille deux rangs dessous"
+    },
+    "rli": {
+      "abbr": "aug levée D",
+      "name": "augmentation levée droite, brin de la maille juste dessous"
+    },
+    "k2tog": {
+      "abbr": "ens end",
+      "name": "mailles ensemble à l'endroit"
+    },
+    "ssk": {
+      "abbr": "surjet",
+      "name": "surjet simple"
+    },
+    "p2tog": {
+      "abbr": "ens env",
+      "name": "mailles ensemble à l'envers"
+    },
+    "ssp": {
+      "abbr": "ssp",
+      "name": "glisser, glisser, tricoter à l'envers"
+    },
+    "k3tog": {
+      "abbr": "3 m. ens. end.",
+      "name": "3 mailles ensemble à l'endroit"
+    },
+    "sssk": {
+      "abbr": "tss",
+      "name": "triple surjet simple"
+    },
+    "cdd": {
+      "abbr": "dsc",
+      "name": "double surjet centré"
+    },
+    "noStitch": null
+  },
+  "composites": {
+    "kfb": "kfb",
+    "lli": "aug levée G",
+    "rli": "aug levée D"
+  }
+}

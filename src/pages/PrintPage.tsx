@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import { getStitch, STITCH_LIST } from "../features/stitches/stitches";
 import StitchGlyph from "../features/stitches/StitchGlyph";
+import { stitchAbbr, stitchName, t } from "../features/i18n/i18n";
+import { useLanguage } from "../features/i18n/useLanguage";
 import { producedBy, widestRow } from "../features/project/rowMath";
 import { rowInstruction, toWrittenPattern } from "../features/project/writtenPattern";
 
@@ -16,6 +18,7 @@ export default function PrintPage() {
   const navigate = useNavigate();
   const [composite, setComposite] = useState(true);
   const [beside, setBeside] = useState(false);
+  useLanguage();
 
   const written = useMemo(
     () => toWrittenPattern(state, { composite }),
@@ -236,7 +239,7 @@ export default function PrintPage() {
         </div>
 
         <div style={{ marginTop: "6mm", pageBreakInside: "avoid" }}>
-          <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>Key</h2>
+          <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>{t("key")}</h2>
           <div style={{ display: "grid", gap: "1.5mm", fontSize: "3.2mm" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "2mm" }}>
               <span
@@ -247,7 +250,7 @@ export default function PrintPage() {
                   display: "inline-block",
                 }}
               />
-              <span>blank - knit</span>
+              <span>{t("blankIsKnit")}</span>
             </div>
             {used
               .filter((stitch) => stitch.id !== "k")
@@ -269,12 +272,12 @@ export default function PrintPage() {
                     <StitchGlyph stitch={stitch} size={keyMm * PX_PER_MM * 0.92} color="#000" />
                   </span>
                   <span>
-                    {stitch.abbr} - {stitch.name}
+                    {stitchAbbr(stitch.id, stitch.abbr)} - {stitchName(stitch.id, stitch.name)}
                   </span>
                 </div>
               ))}
             {state.rows.some((row) => row.short) && (
-              <div>‹ - short row, turned before the end</div>
+              <div>‹ - {t("shortRowMark")}</div>
             )}
           </div>
         </div>
@@ -283,7 +286,7 @@ export default function PrintPage() {
           style={{ marginTop: "6mm", pageBreakBefore: "always" }}
           hidden={beside}
         >
-          <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>Written</h2>
+          <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>{t("written")}</h2>
           <pre
             style={{
               margin: 0,
@@ -299,7 +302,7 @@ export default function PrintPage() {
 
         {(state.notes || state.yarn.yarnName || state.yarn.stitchesPerInch) && (
           <div style={{ marginTop: "6mm", fontSize: "2.8mm", pageBreakInside: "avoid" }}>
-            <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>Notes</h2>
+            <h2 style={{ fontSize: "3.5mm", margin: "0 0 2mm" }}>{t("notesHeading")}</h2>
             {state.yarn.yarnName && <div>Yarn: {state.yarn.yarnName}</div>}
             {state.yarn.stitchesPerInch && (
               <div>

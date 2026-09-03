@@ -5,8 +5,16 @@ import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import { DEFAULT_PALETTE, getStitch } from "../features/stitches/stitches";
 import StitchGlyph from "../features/stitches/StitchGlyph";
 import Segmented from "../shared/components/Segmented";
+import { stitchAbbr, stitchName, t } from "../features/i18n/i18n";
+import { useLanguage } from "../features/i18n/useLanguage";
 import { liveCountFor, paintOutcome, rowStatus } from "../features/project/rowMath";
-import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
+import {
+  CURSOR_COMMANDS,
+  eventToHotkey,
+  loadHotkeyBindings,
+  matchesHotkey,
+  type CursorCommand,
+} from "../features/hotkeys/hotkeys";
 import { logNote, saveLog } from "../features/devlog/devlog";
 
 /**
@@ -29,9 +37,9 @@ function keyToStitch(event: React.KeyboardEvent<HTMLDivElement>): string | null 
 const buttonStyle: React.CSSProperties = {
   padding: "6px 10px",
   borderRadius: 6,
-  border: "1px solid #374151",
-  background: "#1f2937",
-  color: "#e5e7eb",
+  border: "1px solid var(--border)",
+  background: "var(--raised)",
+  color: "var(--text)",
   cursor: "pointer",
   fontSize: 13,
 };
@@ -40,6 +48,7 @@ export default function WorkspacePage() {
   const { state, dispatch, canUndo, canRedo } = useWorkspace();
   const navigate = useNavigate();
   const gridWrapRef = useRef<HTMLDivElement | null>(null);
+  useLanguage();
   const [pendingForce, setPendingForce] = useState<string | null>(null);
   const [blocked, setBlocked] = useState<string | null>(null);
 
@@ -70,7 +79,7 @@ export default function WorkspacePage() {
   const live = liveCountFor(state, state.cursor.row);
 
   return (
-    <main style={{ display: "grid", gap: 16, color: "#e5e7eb", width: "100%" }}>
+    <main style={{ display: "grid", gap: 16, color: "var(--text)", width: "100%" }}>
       <div
         style={{
           display: "flex",
@@ -78,7 +87,7 @@ export default function WorkspacePage() {
           flexWrap: "wrap",
           alignItems: "center",
           paddingBottom: 4,
-          borderBottom: "1px solid #1f2937",
+          borderBottom: "1px solid var(--raised)",
         }}
       >
         <button type="button" style={buttonStyle} onClick={() => navigate("/")}>
@@ -90,14 +99,14 @@ export default function WorkspacePage() {
           onChange={(event) =>
             dispatch({ type: "SET_NAME", value: event.target.value })
           }
-          placeholder="Untitled"
-          aria-label="Pattern name"
+          placeholder={t("untitled")}
+          aria-label={t("patternName")}
           style={{
             padding: "6px 10px",
             borderRadius: 6,
-            border: "1px solid #374151",
-            background: "#0f172a",
-            color: "#f8fafc",
+            border: "1px solid var(--border)",
+            background: "var(--surface)",
+            color: "var(--text-strong)",
             fontSize: 14,
             fontWeight: 600,
             minWidth: 180,
@@ -108,8 +117,8 @@ export default function WorkspacePage() {
           value={state.knitMode}
           onChange={(mode) => dispatch({ type: "SET_KNIT_MODE", mode })}
           options={[
-            { value: "flat", label: "Flat" },
-            { value: "round", label: "Circular" },
+            { value: "flat", label: t("flat") },
+            { value: "round", label: t("circular") },
           ]}
         />
 
@@ -117,9 +126,9 @@ export default function WorkspacePage() {
           value={state.anchor}
           onChange={(anchor) => dispatch({ type: "SET_ANCHOR", anchor })}
           options={[
-            { value: "left", label: "Left" },
-            { value: "center", label: "Centre" },
-            { value: "right", label: "Right" },
+            { value: "left", label: t("left") },
+            { value: "center", label: t("centre") },
+            { value: "right", label: t("right") },
           ]}
         />
 
@@ -127,13 +136,13 @@ export default function WorkspacePage() {
           value={state.workspaceMode}
           onChange={(mode) => dispatch({ type: "SET_WORKSPACE_MODE", mode })}
           options={[
-            { value: "design", label: "Designing" },
-            { value: "track", label: "Knitting" },
+            { value: "design", label: t("designing") },
+            { value: "track", label: t("knitting") },
           ]}
         />
       </div>
 
-      <div style={{ fontSize: 13, color: "#94a3b8" }}>
+      <div style={{ fontSize: 13, color: "var(--muted)" }}>
         Row {state.cursor.row + 1} · {current.consumed} of {live} stitches worked ·{" "}
         {current.produced} produced
       </div>
@@ -142,9 +151,9 @@ export default function WorkspacePage() {
         <div
           style={{
             fontSize: 13,
-            color: "#fcd34d",
-            border: "1px solid #b45309",
-            background: "#1c1917",
+            color: "var(--warn-text)",
+            border: "1px solid var(--warn-border)",
+            background: "var(--warn-bg)",
             borderRadius: 6,
             padding: "8px 12px",
             width: "fit-content",
@@ -161,13 +170,13 @@ export default function WorkspacePage() {
         onKeyDown={(event) => {
           const hotkey = eventToHotkey(event.nativeEvent);
 
-          if (hotkey === hotkeys.undo) {
+          if (matchesHotkey(hotkey, hotkeys.undo)) {
             event.preventDefault();
             if (canUndo) dispatch({ type: "UNDO" });
             return;
           }
 
-          if (hotkey === hotkeys.redo) {
+          if (matchesHotkey(hotkey, hotkeys.redo)) {
             event.preventDefault();
             if (canRedo) dispatch({ type: "REDO" });
             return;
@@ -177,60 +186,53 @@ export default function WorkspacePage() {
           if (stitch) {
             event.preventDefault();
             setBlocked(null);
-
-
             paint(stitch);
             return;
           }
 
-          if (event.shiftKey && event.key.startsWith("Arrow")) {
+          // Shift with a cursor key grows the selection rather than moving, so
+          // the cursor bindings are matched without it before anything else.
+          const bare = hotkey.replace(/^Shift\+/, "");
+          const cursor = (Object.keys(CURSOR_COMMANDS) as CursorCommand[]).find(
+            (command) => matchesHotkey(bare, hotkeys[command])
+          );
+          if (cursor) {
             event.preventDefault();
-            const dir = event.key.replace("Arrow", "").toLowerCase() as
-              | "left"
-              | "right"
-              | "up"
-              | "down";
-            dispatch({ type: "EXTEND_SELECTION", dir });
+            const dir = CURSOR_COMMANDS[cursor];
+            dispatch(
+              event.shiftKey
+                ? { type: "EXTEND_SELECTION", dir }
+                : { type: "MOVE_CURSOR", dir }
+            );
             return;
           }
 
-          if (event.key.startsWith("Arrow")) {
-            event.preventDefault();
-            const dir = event.key.replace("Arrow", "").toLowerCase() as
-              | "left"
-              | "right"
-              | "up"
-              | "down";
-            dispatch({ type: "MOVE_CURSOR", dir });
-            return;
-          }
-
-          if (hotkey === hotkeys.captureMotif) {
+          if (matchesHotkey(hotkey, hotkeys.captureMotif)) {
             event.preventDefault();
             dispatch({ type: "CAPTURE_MOTIF" });
             return;
           }
 
-          if (hotkey === hotkeys.setDestination) {
+          if (matchesHotkey(hotkey, hotkeys.setDestination)) {
             event.preventDefault();
             dispatch({ type: "SET_DESTINATION_FROM_SELECTION" });
             return;
           }
 
-          if (hotkey === hotkeys.fillRow) {
+          if (matchesHotkey(hotkey, hotkeys.fillRow)) {
             event.preventDefault();
             setBlocked(null);
             dispatch({ type: "FILL_ROW" });
             return;
           }
 
-          if (hotkey === hotkeys.turnWork) {
+          if (matchesHotkey(hotkey, hotkeys.turnWork)) {
             event.preventDefault();
             dispatch({ type: "TURN_WORK" });
             return;
           }
 
-          if (hotkey === hotkeys.nextRow) {
+          if (matchesHotkey(hotkey, hotkeys.nextRow)) {
             event.preventDefault();
             if (current.remaining > 0 && (state.rows[state.cursor.row]?.cells.length ?? 0) > 0) {
               setBlocked(
@@ -244,7 +246,7 @@ export default function WorkspacePage() {
             return;
           }
 
-          if (event.key === "Backspace" || event.key === "Delete") {
+          if (matchesHotkey(hotkey, hotkeys.erase)) {
             event.preventDefault();
             dispatch({ type: "ERASE_AND_BACKSPACE" });
             return;
@@ -257,7 +259,8 @@ export default function WorkspacePage() {
         }}
         style={{
           padding: 12,
-          background: "#f8fafc",
+          // The chart stays on paper whatever the interface is doing.
+          background: "var(--chart-paper)",
           borderRadius: 8,
           outline: "none",
           width: "fit-content",
@@ -275,8 +278,8 @@ export default function WorkspacePage() {
           width: "100%",
           padding: "12px 14px",
           borderRadius: 10,
-          border: "1px solid #1f2937",
-          background: "#0f172a",
+          border: "1px solid var(--raised)",
+          background: "var(--surface)",
           boxSizing: "border-box",
         }}
       >
@@ -287,7 +290,7 @@ export default function WorkspacePage() {
               <button
                 key={id}
                 type="button"
-                title={`${stitch.name} — key ${digit}`}
+                title={`${stitchName(id, stitch.name)} - ${digit}`}
                 onClick={() => paint(id)}
                 style={{
                   minWidth: 52,
@@ -297,15 +300,15 @@ export default function WorkspacePage() {
                   gap: 1,
                   padding: "4px 8px",
                   borderRadius: 8,
-                  border: "1px solid #374151",
-                  background: "#111827",
-                  color: "#e5e7eb",
+                  border: "1px solid var(--border)",
+                  background: "var(--surface-2)",
+                  color: "var(--text)",
                   cursor: "pointer",
                 }}
               >
-                <StitchGlyph stitch={stitch} size={18} color="#e5e7eb" />
-                <span style={{ fontSize: 11 }}>{stitch.abbr.toUpperCase()}</span>
-                <span style={{ fontSize: 9, color: "#6b7280" }}>{digit}</span>
+                <StitchGlyph stitch={stitch} size={18} color="var(--text)" />
+                <span style={{ fontSize: 11 }}>{stitchAbbr(id, stitch.abbr).toUpperCase()}</span>
+                <span style={{ fontSize: 9, color: "var(--muted)" }}>{digit}</span>
               </button>
             );
           })}
@@ -319,7 +322,7 @@ export default function WorkspacePage() {
               disabled={!canUndo}
               onClick={() => run({ type: "UNDO" })}
             >
-              Undo
+              {t("undo")}
             </button>
             <button
               type="button"
@@ -327,7 +330,7 @@ export default function WorkspacePage() {
               disabled={!canRedo}
               onClick={() => run({ type: "REDO" })}
             >
-              Redo
+              {t("redo")}
             </button>
           </div>
 
@@ -341,7 +344,7 @@ export default function WorkspacePage() {
                 run({ type: "FILL_ROW" });
               }}
             >
-              To last stitch
+              {t("toLastStitch")}
             </button>
             <button
               type="button"
@@ -349,7 +352,7 @@ export default function WorkspacePage() {
               title="Erase the stitch before the cursor (Backspace)"
               onClick={() => run({ type: "ERASE_AND_BACKSPACE" })}
             >
-              Erase
+              {t("erase")}
             </button>
             <button
               type="button"
@@ -361,16 +364,16 @@ export default function WorkspacePage() {
               }
               onClick={() => run({ type: "NEXT_ROW" })}
             >
-              Next row
+              {t("nextRow")}
             </button>
             <button
               type="button"
-              style={{ ...act, borderColor: "#b45309" }}
+              style={{ ...act, borderColor: "var(--warn-border)" }}
               title="Turn early, making this a short row. Reshapes everything above it. (Shift+Enter)"
               disabled={current.remaining <= 0}
               onClick={() => run({ type: "TURN_WORK" })}
             >
-              Turn work
+              {t("turnWork")}
             </button>
           </div>
 
@@ -383,7 +386,7 @@ export default function WorkspacePage() {
               style={act}
               onClick={() => run({ type: "SET_DESTINATION_FROM_SELECTION" })}
             >
-              Set destination
+              {t("setDestination")}
             </button>
           </div>
 
@@ -423,24 +426,26 @@ export default function WorkspacePage() {
             position: "fixed",
             inset: 0,
             background: "rgba(0,0,0,0.6)",
-            display: "grid",
-            placeItems: "center",
+            display: "flex",
+            padding: 20,
+            overflowY: "auto",
             zIndex: 60,
           }}
         >
           <div
             style={{
+              margin: "auto",
               width: "min(420px, 90%)",
               display: "grid",
               gap: 14,
               padding: 20,
               borderRadius: 12,
-              border: "1px solid #374151",
-              background: "#111827",
+              border: "1px solid var(--border)",
+              background: "var(--surface-2)",
             }}
           >
-            <h3 style={{ margin: 0, color: "#f8fafc" }}>That does not fit</h3>
-            <p style={{ margin: 0, color: "#cbd5e1", fontSize: 14 }}>
+            <h3 style={{ margin: 0, color: "var(--text-strong)" }}>That does not fit</h3>
+            <p style={{ margin: 0, color: "var(--text-soft)", fontSize: 14 }}>
               {getStitch(pendingForce).name} takes{" "}
               {getStitch(pendingForce).consumes} stitches, and this row has{" "}
               {current.remaining} left. You can place it anyway; the row will be
@@ -456,7 +461,7 @@ export default function WorkspacePage() {
               </button>
               <button
                 type="button"
-                style={{ ...buttonStyle, background: "#b45309" }}
+                style={{ ...buttonStyle, background: "var(--warn-border)" }}
                 onClick={() => {
                   dispatch({
                     type: "PAINT_AND_ADVANCE",

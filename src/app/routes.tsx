@@ -5,6 +5,7 @@ import CreatePatternPage from "../pages/CreatePatternPage";
 import WorkspacePage from "../pages/WorkspacePage";
 import PrintPage from "../pages/PrintPage";
 import SettingsPage from "../pages/SettingsPage";
+import InfoPage from "../pages/InfoPage";
 
 // Pages serves the app from /<repo>/, so the router has to be told where the
 // app starts or every path looks like a route it does not have. Vite fills
@@ -21,6 +22,7 @@ export const router = createBrowserRouter([
       { path: "workspace", element: <WorkspacePage /> },
       { path: "print", element: <PrintPage /> },
       { path: "settings", element: <SettingsPage /> },
+      { path: "info", element: <InfoPage /> },
     ],
   },
 ], { basename });

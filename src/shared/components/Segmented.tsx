@@ -4,7 +4,16 @@ export interface SegmentedOption<T extends string> {
   title?: string;
 }
 
-/** Sliding selector. Two options read as a switch, three as a position picker. */
+/**
+ * Sliding selector. Two options read as a switch, three as a position picker.
+ *
+ * The track is a grid of equal columns so every segment is the same width
+ * whatever its label, which is what lets the pill be positioned by arithmetic.
+ * That arithmetic has to subtract the track's own padding: a percentage on an
+ * absolutely positioned child resolves against the padding box, not the space
+ * the buttons actually sit in, so 100%/n is a few pixels wider than a column
+ * and the error compounds along the row.
+ */
 export default function Segmented<T extends string>({
   options,
   value,
@@ -17,31 +26,33 @@ export default function Segmented<T extends string>({
   label?: string;
 }) {
   const index = Math.max(0, options.findIndex((option) => option.value === value));
-  const width = 100 / options.length;
+  const pad = 3;
+  const column = `((100% - ${pad * 2}px) / ${options.length})`;
 
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-      {label && <span style={{ fontSize: 12, color: "#6b7280" }}>{label}</span>}
+      {label && <span style={{ fontSize: 12, color: "var(--muted)" }}>{label}</span>}
       <div
         style={{
           position: "relative",
-          display: "flex",
-          padding: 3,
+          display: "inline-grid",
+          gridTemplateColumns: `repeat(${options.length}, 1fr)`,
+          padding: pad,
           borderRadius: 999,
-          background: "#0f172a",
-          border: "1px solid #374151",
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
         }}
       >
         <div
           aria-hidden
           style={{
             position: "absolute",
-            top: 3,
-            bottom: 3,
-            left: `calc(${index * width}% + 3px)`,
-            width: `calc(${width}% - 6px)`,
+            top: pad,
+            bottom: pad,
+            left: `calc(${pad}px + ${index} * ${column})`,
+            width: `calc(${column})`,
             borderRadius: 999,
-            background: "#1d4ed8",
+            background: "var(--accent)",
             transition: "left 140ms ease",
           }}
         />
@@ -54,13 +65,15 @@ export default function Segmented<T extends string>({
             onClick={() => onChange(option.value)}
             style={{
               position: "relative",
-              minWidth: 84,
-              padding: "6px 14px",
+              padding: "6px 16px",
               border: "none",
               background: "transparent",
-              color: option.value === value ? "#eff6ff" : "#9ca3af",
+              color: option.value === value ? "var(--on-accent)" : "var(--muted)",
               fontSize: 13,
-              fontWeight: option.value === value ? 600 : 400,
+              // Constant weight: a bold selected label is wider than an
+              // unselected one, so varying it resizes the columns under the
+              // pill every time the selection moves.
+              fontWeight: 600,
               cursor: "pointer",
               whiteSpace: "nowrap",
             }}
