@@ -7,6 +7,7 @@
  * gets reintroduced on purpose, in whichever convention is asked for.
  */
 import { COMPOSITES, getStitch } from "../stitches/stitches";
+import { compositeAbbr, stitchAbbr, tp } from "../i18n/i18n";
 import { producedBy } from "./rowMath";
 import type { KnitProject, PatternRow } from "./types";
 
@@ -29,7 +30,7 @@ function applyComposites(ids: string[]): string[] {
       composite.cells.every((cell, offset) => ids[i + offset] === cell)
     );
     if (match) {
-      out.push(match.abbr);
+      out.push(`::${match.abbr}`);
       i += match.cells.length;
     } else {
       out.push(ids[i]);
@@ -68,13 +69,24 @@ function runLength(tokens: string[]): string {
   while (i < tokens.length) {
     let run = 1;
     while (tokens[i + run] === tokens[i]) run += 1;
-    const stitch = getStitch(tokens[i]);
-    const abbr = stitch.abbr || tokens[i];
+    const token = tokens[i];
+    // Composites are marked so they resolve against the composite table rather
+    // than being looked up as stitches that do not exist.
+    if (token.startsWith("::")) {
+      const abbr = compositeAbbr(token.slice(2));
+      parts.push(run > 1 ? tp("countedStitch", { abbr, count: run }) : abbr);
+      i += run;
+      continue;
+    }
+    const stitch = getStitch(token);
+    const abbr = stitchAbbr(token, stitch.abbr || token);
     const counted = run > 1 || stitch.category === "base";
-    parts.push(counted ? `${abbr}${run}` : abbr);
+    // Where the count sits differs by language: English writes k6, German
+    // 6 M re. The locale supplies the shape, not just the words.
+    parts.push(counted ? tp("countedStitch", { abbr, count: run }) : abbr);
     i += run;
   }
-  return parts.join(", ");
+  return parts.join(tp("separator"));
 }
 
 export function rowInstruction(row: PatternRow, options: WrittenOptions): string {
@@ -86,7 +98,7 @@ export function rowInstruction(row: PatternRow, options: WrittenOptions): string
   // in it: six knits are "k6", not "(k) x6".
   const repeat = findRepeat(tokens);
   if (repeat && repeat.times > 1 && new Set(repeat.unit).size > 1) {
-    return `(${runLength(repeat.unit)}) x${repeat.times}`;
+    return tp("repeat", { unit: runLength(repeat.unit), times: repeat.times });
   }
   return runLength(tokens);
 }
@@ -97,21 +109,22 @@ export function toWrittenPattern(
 ): string {
   const lines: string[] = [];
 
-  lines.push(`Cast on ${project.castOn}.`);
-  lines.push(project.knitMode === "round" ? "Worked in the round." : "Worked flat.");
+  lines.push(tp("castOn", { count: project.castOn }));
+  lines.push(tp(project.knitMode === "round" ? "workedRound" : "workedFlat"));
   lines.push("");
 
   project.rows.forEach((row, index) => {
-    const label = project.knitMode === "round" ? "Round" : "Row";
+    const label = tp(project.knitMode === "round" ? "round" : "row");
     const produced = producedBy(row);
-    const turn = row.short ? " Turn." : "";
+    const turn = row.short ? ` ${tp("turn")}` : "";
+    const count = tp("stitchCount", { count: produced });
     lines.push(
-      `${label} ${index + 1}: ${rowInstruction(row, options)}.${turn} (${produced} sts)`
+      `${label} ${index + 1}: ${rowInstruction(row, options)}.${turn} ${count}`
     );
   });
 
   if (project.notes.trim()) {
-    lines.push("", "Notes", "-----", project.notes.trim());
+    lines.push("", tp("notesHeading"), "-----", project.notes.trim());
   }
 
   return lines.join("\n");

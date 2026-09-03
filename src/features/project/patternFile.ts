@@ -11,6 +11,7 @@
  * friend loads through the same door.
  */
 import { getStitch, STITCH_LIST } from "../stitches/stitches";
+import { stitchAbbr, stitchName, t } from "../i18n/i18n";
 import { producedBy, widestRow } from "./rowMath";
 import { parseProjectJson, serializeProject } from "./storage";
 import { toWrittenPattern } from "./writtenPattern";
@@ -40,7 +41,7 @@ export function buildPatternFile(project: KnitProject): string {
         .reverse()
         .map((cell) => {
           const stitch = getStitch(cell.stitch);
-          const glyph = stitch.id === "k" ? "" : escapeHtml(stitch.abbr);
+          const glyph = stitch.id === "k" ? "" : escapeHtml(stitchAbbr(stitch.id, stitch.abbr));
           return `<i>${glyph}</i>`;
         })
         .join("");
@@ -53,7 +54,7 @@ export function buildPatternFile(project: KnitProject): string {
     .filter((stitch) => stitch.id !== "k")
     .map(
       (stitch) =>
-        `<li><i>${escapeHtml(stitch.abbr)}</i> ${escapeHtml(stitch.abbr)} - ${escapeHtml(stitch.name)}</li>`
+        `<li><i>${escapeHtml(stitchAbbr(stitch.id, stitch.abbr))}</i> ${escapeHtml(stitchAbbr(stitch.id, stitch.abbr))} - ${escapeHtml(stitchName(stitch.id, stitch.name))}</li>`
     )
     .join("\n");
 
@@ -89,13 +90,13 @@ export function buildPatternFile(project: KnitProject): string {
 
 ${chart}
 
-<h2>Key</h2>
+<h2>${escapeHtml(t("key"))}</h2>
 <ul>
-<li><i></i> blank - knit</li>
+<li><i></i> ${escapeHtml(t("blankIsKnit"))}</li>
 ${key}
 </ul>
 
-<h2>Written</h2>
+<h2>${escapeHtml(t("written"))}</h2>
 <pre>${escapeHtml(toWrittenPattern(project))}</pre>
 
 <footer><span>KnitGrid</span><span>jsubbz.github.io/KnitGrid</span></footer>

@@ -1,0 +1,144 @@
+{
+  "code": "de",
+  "name": "Deutsch",
+  "reviewed": false,
+  "ui": {
+    "file": "Datei",
+    "new": "Neu",
+    "savePattern": "Anleitung speichern...",
+    "loadPattern": "Anleitung öffnen...",
+    "print": "Drucken...",
+    "edit": "Bearbeiten",
+    "hotkeys": "Tastenkürzel",
+    "settings": "Einstellungen",
+    "languages": "Sprachen",
+    "info": "Info",
+    "gettingStarted": "Erste Schritte",
+    "about": "Über KnitGrid",
+    "submitFeedback": "Rückmeldung senden",
+    "home": "Start",
+    "undo": "Rückgängig",
+    "redo": "Wiederholen",
+    "flat": "In Reihen",
+    "circular": "In Runden",
+    "left": "Links",
+    "centre": "Mitte",
+    "right": "Rechts",
+    "designing": "Entwerfen",
+    "knitting": "Stricken",
+    "toLastStitch": "Bis zur letzten Masche",
+    "erase": "Löschen",
+    "nextRow": "Nächste Reihe",
+    "turnWork": "Wenden",
+    "captureMotif": "Muster erfassen",
+    "setDestination": "Ziel festlegen",
+    "patternName": "Name der Anleitung",
+    "untitled": "Ohne Titel",
+    "createNewPattern": "Neue Anleitung erstellen",
+    "stitchesToCastOn": "Anzuschlagende Maschen",
+    "castOnRange": "{min} bis {max} Maschen",
+    "visualAlignment": "Ausrichtung",
+    "alignmentHint": "Die Ausrichtung lässt sich im Arbeitsbereich jederzeit ändern.",
+    "notes": "Notizen",
+    "notesPlaceholder": "Maschenprobe, Garn, Nadelstärke, Größe.",
+    "startCreating": "Loslegen",
+    "cancel": "Abbrechen",
+    "key": "Legende",
+    "written": "Schriftlich",
+    "blankIsKnit": "leer - rechts",
+    "shortRowMark": "verkürzte Reihe, vor dem Ende gewendet",
+    "settings.title": "Einstellungen",
+    "settings.appearance": "Darstellung",
+    "settings.theme": "Design",
+    "settings.themeSystem": "System",
+    "settings.themeLight": "Hell",
+    "settings.themeDark": "Dunkel",
+    "settings.language": "Sprache",
+    "settings.languageSystem": "Browser folgen"
+  },
+  "pattern": {
+    "castOn": "{count} Maschen anschlagen.",
+    "workedFlat": "In Reihen gestrickt.",
+    "workedRound": "In Runden gestrickt.",
+    "row": "Reihe",
+    "round": "Runde",
+    "stitchCount": "({count} M)",
+    "turn": "Wenden.",
+    "notesHeading": "Notizen",
+    "repeat": "({unit}) {times}x",
+    "separator": ", ",
+    "countedStitch": "{count} M {abbr}"
+  },
+  "stitches": {
+    "k": {
+      "abbr": "re",
+      "name": "rechts stricken"
+    },
+    "p": {
+      "abbr": "li",
+      "name": "links stricken"
+    },
+    "sl": {
+      "abbr": "M abh",
+      "name": "Masche abheben"
+    },
+    "yo": {
+      "abbr": "U",
+      "name": "Umschlag"
+    },
+    "m1": {
+      "abbr": "zun",
+      "name": "eine Masche zunehmen"
+    },
+    "m1l": {
+      "abbr": "zun li",
+      "name": "aus dem Querfaden links geneigt zunehmen"
+    },
+    "m1r": {
+      "abbr": "zun re",
+      "name": "aus dem Querfaden rechts geneigt zunehmen"
+    },
+    "lli": {
+      "abbr": "angestr Zun li",
+      "name": "angestrickte Zunahme links, aus der Vorreihe"
+    },
+    "rli": {
+      "abbr": "angestr Zun re",
+      "name": "angestrickte Zunahme rechts, aus der Vorreihe"
+    },
+    "k2tog": {
+      "abbr": "re zus-str",
+      "name": "Maschen rechts zusammenstricken"
+    },
+    "ssk": {
+      "abbr": "überz zus-str",
+      "name": "überzogen zusammenstricken, nach links geneigte Abnahme"
+    },
+    "p2tog": {
+      "abbr": "li zus-str",
+      "name": "Maschen links zusammenstricken"
+    },
+    "ssp": {
+      "abbr": "ssp",
+      "name": "2 Maschen wie zum Rechtsstricken abheben, zurück auf die linke Nadel, links verschränkt zusammenstricken"
+    },
+    "k3tog": {
+      "abbr": "3 M re zus-str",
+      "name": "3 Maschen rechts zusammenstricken"
+    },
+    "sssk": {
+      "abbr": "sssk",
+      "name": "3 Maschen nacheinander rechts abheben, alle 3 zusammen rechts verschränkt stricken"
+    },
+    "cdd": {
+      "abbr": "zda",
+      "name": "zentrierte doppelte Abnahme"
+    },
+    "noStitch": null
+  },
+  "composites": {
+    "kfb": "kfb",
+    "lli": "angestr Zun li",
+    "rli": "angestr Zun re"
+  }
+}

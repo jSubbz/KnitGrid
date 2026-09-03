@@ -1,6 +1,6 @@
 {
   "tableVersion": 1,
-  "note": "Per-cell truth for a knitting chart. consumes = live stitches taken from the row below; produces = stitches contributed to this row. Glyphs here are the on-screen chart glyphs; printed charts leave knit blank, which is an export concern rather than a table one. Charts record right-side appearance; on a wrong-side row of flat knitting the knitter works wsCounterpart. Composite increases are not chart symbols - they are two cells reassembled by the written export. Entries without wsCounterpart are unresearched, not symmetric-by-default. `pending` lists stitches the table must grow to hold and what each one needs from the schema before it can be added. `lean` says which way a stitch leans in the fabric: the drawn glyph slants that way, with a plus for increases and a minus for decreases.",
+  "note": "Per-cell truth for a knitting chart. consumes = live stitches taken from the row below; produces = stitches contributed to this row. Glyphs here are the on-screen chart glyphs; printed charts leave knit blank, which is an export concern rather than a table one. Charts record right-side appearance; on a wrong-side row of flat knitting the knitter works wsCounterpart. Composite increases are not chart symbols - they are two cells reassembled by the written export. Entries without wsCounterpart are unresearched, not symmetric-by-default. `pending` lists stitches the table must grow to hold and what each one needs from the schema before it can be added; `later` lists ones worth having eventually, with no schema work blocking them. `lean` says which way a stitch leans in the fabric: the drawn glyph slants that way, with a plus for increases and a minus for decreases.",
   "stitches": [
     {
       "id": "noStitch",
@@ -230,6 +230,17 @@
         "Count-neutral in both directions: creating a double stitch consumes 1 and produces 1, and resolving it consumes 1 and produces 1. The two integers alone therefore cannot express it.",
         "It carries state. A created double stitch must be resolved exactly once, later, in the same column. That is a column-wise invariant, unlike everything else in this table, which is row-wise. StitchDef will need a field for it - a pair id, or a marker flag.",
         "Short rows break the row invariant. A short row deliberately stops and turns, so it consumes fewer stitches than the row below produced. Row validation must know a row is short, or every short row reads as an error."
+      ]
+    }
+  ],
+  "later": [
+    {
+      "id": "tbl",
+      "name": "through the back loop",
+      "why": "A modifier rather than a stitch: knit or purl worked into the back of the loop, twisting it. Turns up constantly in twisted ribbing and in the German and French traditions, which both have a standard abbreviation for it (verschr., m. torse).",
+      "notes": [
+        "Count-neutral, 1 in and 1 out, so the two integers describe it fine.",
+        "It modifies another stitch rather than standing alone, so the table needs either a modifier concept or a separate entry per combination (ktbl, ptbl, k2tog tbl, ssk tbl)."
       ]
     }
   ]

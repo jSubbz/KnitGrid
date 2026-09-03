@@ -1,19 +1,21 @@
 import { useRef, useState } from "react";
+import { LOCALE_LIST, getLanguage, setLanguage, t } from "../../features/i18n/i18n";
+import { useLanguage } from "../../features/i18n/useLanguage";
 import { Outlet, useNavigate } from "react-router-dom";
 import { useWorkspace } from "../../features/workspace/state/WorkspaceContext";
 import { buildPatternFile, readPatternFile } from "../../features/project/patternFile";
 import HotkeyEditorModal from "../../features/workspace/components/HotkeyEditorModal";
+import { APP_VERSION } from "../../features/feedback/feedback";
 
 type MenuKey = "file" | "edit" | "languages" | "info" | null;
-type LanguageKey = "English" | "German" | "French";
 
 export default function AppShell() {
   const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
-  const [language, setLanguage] = useState<LanguageKey>("English");
   const [showHotkeyEditor, setShowHotkeyEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  useLanguage();
 
   const closeMenus = () => setOpenMenu(null);
 
@@ -58,7 +60,7 @@ export default function AppShell() {
   const buttonStyle: React.CSSProperties = {
     background: "transparent",
     border: "none",
-    color: "#e5e7eb",
+    color: "var(--text)",
     padding: "6px 10px",
     cursor: "pointer",
     fontSize: 14,
@@ -69,8 +71,8 @@ export default function AppShell() {
     top: "100%",
     left: 0,
     minWidth: 200,
-    background: "#111827",
-    border: "1px solid #374151",
+    background: "var(--surface-2)",
+    border: "1px solid var(--border)",
     boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
     zIndex: 20,
     display: "grid",
@@ -83,15 +85,15 @@ export default function AppShell() {
     padding: "8px 12px",
     cursor: "pointer",
     fontSize: 14,
-    color: "#e5e7eb",
+    color: "var(--text)",
   };
 
   return (
     <div
       style={{
         minHeight: "100vh",
-        background: "#0b1220",
-        color: "#e5e7eb",
+        background: "var(--bg)",
+        color: "var(--text)",
       }}
       onClick={() => {
         if (openMenu) closeMenus();
@@ -99,8 +101,8 @@ export default function AppShell() {
     >
       <header
         style={{
-          borderBottom: "1px solid #374151",
-          background: "#0f172a",
+          borderBottom: "1px solid var(--border)",
+          background: "var(--surface)",
         }}
       >
         <div
@@ -110,8 +112,8 @@ export default function AppShell() {
             gap: 0,
             minHeight: 34,
             padding: "0 8px",
-            borderBottom: "1px solid #374151",
-            background: "#111827",
+            borderBottom: "1px solid var(--border)",
+            background: "var(--surface-2)",
           }}
           onClick={(event) => event.stopPropagation()}
         >
@@ -121,7 +123,7 @@ export default function AppShell() {
               style={buttonStyle}
               onClick={() => setOpenMenu(openMenu === "file" ? null : "file")}
             >
-              File
+              {t("file")}
             </button>
             {openMenu === "file" && (
               <div style={menuPanelStyle}>
@@ -133,21 +135,21 @@ export default function AppShell() {
                     navigate("/create");
                   }}
                 >
-                  New
+                  {t("new")}
                 </button>
                 <button
                   type="button"
                   style={menuItemStyle}
                   onClick={handleSavePattern}
                 >
-                  Save pattern...
+                  {t("savePattern")}
                 </button>
                 <button
                   type="button"
                   style={menuItemStyle}
                   onClick={handleLoadClick}
                 >
-                  Load pattern...
+                  {t("loadPattern")}
                 </button>
                 <button
                   type="button"
@@ -157,7 +159,7 @@ export default function AppShell() {
                     navigate("/print");
                   }}
                 >
-                  Print...
+                  {t("print")}
                 </button>
 
 
@@ -171,7 +173,7 @@ export default function AppShell() {
               style={buttonStyle}
               onClick={() => setOpenMenu(openMenu === "edit" ? null : "edit")}
             >
-              Edit
+              {t("edit")}
             </button>
             {openMenu === "edit" && (
               <div style={menuPanelStyle}>
@@ -183,7 +185,17 @@ export default function AppShell() {
                     setShowHotkeyEditor(true);
                   }}
                 >
-                  Hotkeys
+                  {t("hotkeys")}
+                </button>
+                <button
+                  type="button"
+                  style={menuItemStyle}
+                  onClick={() => {
+                    closeMenus();
+                    navigate("/settings");
+                  }}
+                >
+                  {t("settings")}
                 </button>
               </div>
             )}
@@ -197,25 +209,27 @@ export default function AppShell() {
                 setOpenMenu(openMenu === "languages" ? null : "languages")
               }
             >
-              Languages
+              {t("languages")}
             </button>
             {openMenu === "languages" && (
               <div style={menuPanelStyle}>
-                {(["English", "German", "French"] as LanguageKey[]).map((item) => (
+                {LOCALE_LIST.map((locale) => (
                   <button
-                    key={item}
+                    key={locale.code}
                     type="button"
                     style={{
                       ...menuItemStyle,
-                      fontWeight: language === item ? 700 : 400,
+                      fontWeight: getLanguage() === locale.code ? 700 : 400,
                     }}
                     onClick={() => {
-                      setLanguage(item);
-                      window.alert(`${item} selected. Translation wiring can come next.`);
+                      setLanguage(locale.code);
                       closeMenus();
                     }}
                   >
-                    {item}
+                    {locale.name}
+                    {!locale.reviewed && (
+                      <span style={{ color: "var(--muted)", fontSize: 11 }}> · unchecked</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -228,34 +242,27 @@ export default function AppShell() {
               style={buttonStyle}
               onClick={() => setOpenMenu(openMenu === "info" ? null : "info")}
             >
-              Info
+              {t("info")}
             </button>
             {openMenu === "info" && (
               <div style={menuPanelStyle}>
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={() => {
-                    window.alert(
-                      "Start here:\n\nOpen a starter chart from the Library, or use File -> New to begin your own pattern."
-                    );
-                    closeMenus();
-                  }}
-                >
-                  Tutorial Info
-                </button>
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={() => {
-                    window.alert(
-                      "KnitGrid\nDevelopment build\nWorkspace, Library, and tiling are in active development."
-                    );
-                    closeMenus();
-                  }}
-                >
-                  Developer Info
-                </button>
+                {([
+                  ["start", t("gettingStarted")],
+                  ["about", t("about")],
+                  ["feedback", t("submitFeedback")],
+                ] as const).map(([pane, text]) => (
+                  <button
+                    key={pane}
+                    type="button"
+                    style={menuItemStyle}
+                    onClick={() => {
+                      closeMenus();
+                      navigate("/info", { state: { pane } });
+                    }}
+                  >
+                    {text}
+                  </button>
+                ))}
               </div>
             )}
           </div>
@@ -265,13 +272,13 @@ export default function AppShell() {
               marginLeft: "auto",
               paddingRight: 8,
               fontSize: 13,
-              color: "#94a3b8",
+              color: "var(--muted)",
               display: "flex",
               gap: 12,
             }}
           >
-            <span>v0.7.1-dev</span>
-            <span>{language}</span>
+            <span>v{APP_VERSION}</span>
+            <span>{getLanguage().toUpperCase()}</span>
           </div>
         </div>
 

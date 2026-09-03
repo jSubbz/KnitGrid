@@ -1,23 +1,62 @@
+/**
+ * Keyboard bindings.
+ *
+ * Charting is meant to feel like typing a sentence, so the keyboard is the
+ * primary interface and the toolbar is the discoverable copy of it. Everything
+ * the workspace listens for is in this table and every entry can be changed.
+ *
+ * A binding is a comma-separated list, so one command can answer to more than
+ * one key - erase is Backspace and Delete, because both mean the same thing to
+ * the person pressing them. Selection is not listed separately: holding Shift
+ * with a cursor key grows the selection instead of moving, whatever the cursor
+ * keys have been rebound to.
+ *
+ * The number row is the exception. Which stitch each digit paints is the
+ * stitch palette, which belongs in Settings, so it is described here rather
+ * than bound here.
+ */
 export type HotkeyCommand =
   | "undo"
   | "redo"
-  | "captureMotif"
-  | "setDestination"
+  | "cursorLeft"
+  | "cursorRight"
+  | "cursorUp"
+  | "cursorDown"
+  | "fillRow"
   | "nextRow"
   | "turnWork"
-  | "fillRow";
+  | "erase"
+  | "captureMotif"
+  | "setDestination";
 
 export type HotkeyBindings = Record<HotkeyCommand, string>;
 
 export const DEFAULT_HOTKEYS: HotkeyBindings = {
   undo: "Ctrl+Z",
   redo: "Ctrl+Y",
-  captureMotif: "T",
-  setDestination: "D",
+  cursorLeft: "ArrowLeft",
+  cursorRight: "ArrowRight",
+  cursorUp: "ArrowUp",
+  cursorDown: "ArrowDown",
+  fillRow: "Space",
   nextRow: "Enter",
   turnWork: "Shift+Enter",
-  fillRow: "Space",
+  erase: "Backspace, Delete",
+  captureMotif: "T",
+  setDestination: "D",
 };
+
+export const HOTKEY_COMMANDS = Object.keys(DEFAULT_HOTKEYS) as HotkeyCommand[];
+
+/** The cursor keys, in the order the workspace maps them to directions. */
+export const CURSOR_COMMANDS = {
+  cursorLeft: "left",
+  cursorRight: "right",
+  cursorUp: "up",
+  cursorDown: "down",
+} as const;
+
+export type CursorCommand = keyof typeof CURSOR_COMMANDS;
 
 const STORAGE_KEY = "knitgrid.hotkeys.v1";
 
@@ -28,11 +67,9 @@ function normalizeKeyName(key: string): string {
   return key;
 }
 
-export function normalizeHotkeyString(input: string): string {
-  const raw = input.trim();
-  if (!raw) return "";
-
-  const parts = raw
+/** One key with its modifiers, e.g. "Ctrl+Shift+Z". */
+function normalizeOne(input: string): string {
+  const parts = input
     .split("+")
     .map((part) => part.trim())
     .filter(Boolean);
@@ -42,81 +79,74 @@ export function normalizeHotkeyString(input: string): string {
 
   for (const part of parts) {
     const lower = part.toLowerCase();
-
-    if (lower === "ctrl" || lower === "control") {
-      modifiers.add("Ctrl");
-      continue;
-    }
-
-    if (lower === "shift") {
-      modifiers.add("Shift");
-      continue;
-    }
-
-    if (lower === "alt") {
-      modifiers.add("Alt");
-      continue;
-    }
-
-    if (lower === "meta" || lower === "cmd" || lower === "command") {
+    if (lower === "ctrl" || lower === "control") modifiers.add("Ctrl");
+    else if (lower === "shift") modifiers.add("Shift");
+    else if (lower === "alt") modifiers.add("Alt");
+    else if (lower === "meta" || lower === "cmd" || lower === "command")
       modifiers.add("Meta");
-      continue;
-    }
-
-    mainKey = normalizeKeyName(part);
+    else mainKey = normalizeKeyName(part);
   }
 
-  const orderedModifiers = ["Ctrl", "Meta", "Alt", "Shift"].filter((name) =>
+  const ordered = ["Ctrl", "Meta", "Alt", "Shift"].filter((name) =>
     modifiers.has(name)
   );
+  return [...ordered, mainKey].filter(Boolean).join("+");
+}
 
-  return [...orderedModifiers, mainKey].filter(Boolean).join("+");
+/** A whole binding, which may list several keys. */
+export function normalizeHotkeyString(input: string): string {
+  return input
+    .split(",")
+    .map(normalizeOne)
+    .filter(Boolean)
+    .join(", ");
+}
+
+export function hotkeyKeys(binding: string): string[] {
+  return binding
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function matchesHotkey(pressed: string, binding: string): boolean {
+  return hotkeyKeys(binding).includes(pressed);
 }
 
 export function eventToHotkey(event: KeyboardEvent | React.KeyboardEvent): string {
   const parts: string[] = [];
-
   if (event.ctrlKey) parts.push("Ctrl");
   if (event.metaKey) parts.push("Meta");
   if (event.altKey) parts.push("Alt");
   if (event.shiftKey) parts.push("Shift");
+  return [...parts, normalizeKeyName(event.key)].join("+");
+}
 
-  let key = event.key;
-  key = normalizeKeyName(key);
-
-  return [...parts, key].join("+");
+/** Fills in defaults for anything missing or unreadable, one command at a time. */
+export function normalizeBindings(input: Partial<HotkeyBindings>): HotkeyBindings {
+  const out = {} as HotkeyBindings;
+  for (const command of HOTKEY_COMMANDS) {
+    out[command] =
+      normalizeHotkeyString(input[command] ?? DEFAULT_HOTKEYS[command]) ||
+      DEFAULT_HOTKEYS[command];
+  }
+  return out;
 }
 
 export function loadHotkeyBindings(): HotkeyBindings {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return DEFAULT_HOTKEYS;
-
-    const parsed = JSON.parse(raw) as Partial<HotkeyBindings>;
-    return {
-      undo: normalizeHotkeyString(parsed.undo ?? DEFAULT_HOTKEYS.undo) || DEFAULT_HOTKEYS.undo,
-      redo: normalizeHotkeyString(parsed.redo ?? DEFAULT_HOTKEYS.redo) || DEFAULT_HOTKEYS.redo,
-      captureMotif:
-        normalizeHotkeyString(parsed.captureMotif ?? DEFAULT_HOTKEYS.captureMotif) ||
-        DEFAULT_HOTKEYS.captureMotif,
-      setDestination:
-        normalizeHotkeyString(parsed.setDestination ?? DEFAULT_HOTKEYS.setDestination) ||
-        DEFAULT_HOTKEYS.setDestination,
-      nextRow:
-        normalizeHotkeyString(parsed.nextRow ?? DEFAULT_HOTKEYS.nextRow) ||
-        DEFAULT_HOTKEYS.nextRow,
-      turnWork:
-        normalizeHotkeyString(parsed.turnWork ?? DEFAULT_HOTKEYS.turnWork) ||
-        DEFAULT_HOTKEYS.turnWork,
-      fillRow:
-        normalizeHotkeyString(parsed.fillRow ?? DEFAULT_HOTKEYS.fillRow) ||
-        DEFAULT_HOTKEYS.fillRow,
-    };
+    return normalizeBindings(JSON.parse(raw) as Partial<HotkeyBindings>);
   } catch {
     return DEFAULT_HOTKEYS;
   }
 }
 
 export function saveHotkeyBindings(bindings: HotkeyBindings) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(bindings));
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(bindings));
+  } catch {
+    // A blocked store just means the bindings do not persist.
+  }
 }

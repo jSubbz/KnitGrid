@@ -1,6 +1,8 @@
 import type { ReactNode } from "react";
 import { getStitch, workedAs } from "../../stitches/stitches";
 import StitchGlyph from "../../stitches/StitchGlyph";
+import { stitchName } from "../../i18n/i18n";
+import { useLanguage } from "../../i18n/useLanguage";
 import { liveCountFor, rowStatus, widestRow } from "../../project/rowMath";
 import { useWorkspace } from "../state/WorkspaceContext";
 import type { RowStatus } from "../../project/rowMath";
@@ -20,6 +22,7 @@ const STATE_COLOR: Record<RowStatus["state"], string> = {
 
 export default function WorkspaceGrid() {
   const { state, dispatch } = useWorkspace();
+  useLanguage();
 
   // The canvas is as wide as the widest row so every row anchors against a
   // fixed edge. Without this the first row grows the container as it is typed
@@ -61,7 +64,7 @@ export default function WorkspaceGrid() {
         return (
           <div
             key={index}
-            title={`${stitch.name} · ${stitch.consumes} in, ${stitch.produces} out`}
+            title={`${stitchName(stitch.id, stitch.name)} · ${stitch.consumes} in, ${stitch.produces} out`}
             onMouseDown={(event) => {
               event.preventDefault();
               dispatch({ type: "SET_CURSOR", cursor: { row: rowIndex, index } });

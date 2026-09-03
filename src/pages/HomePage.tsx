@@ -8,16 +8,15 @@ export default function HomePage() {
       style={{
         display: "grid",
         gap: 24,
-        color: "#e5e7eb",
+        color: "var(--text)",
       }}
     >
       <section
         style={{
           padding: 28,
-          border: "1px solid #374151",
+          border: "1px solid var(--border)",
           borderRadius: 12,
-          background:
-            "linear-gradient(135deg, rgba(30,41,59,0.95), rgba(15,23,42,0.98))",
+          background: "linear-gradient(135deg, var(--raised), var(--surface))",
         }}
       >
         <div style={{ display: "grid", gap: 12 }}>
@@ -26,7 +25,7 @@ export default function HomePage() {
               margin: 0,
               fontSize: 42,
               lineHeight: 1.1,
-              color: "#f8fafc",
+              color: "var(--text-strong)",
             }}
           >
             KnitGrid
@@ -36,12 +35,13 @@ export default function HomePage() {
             style={{
               margin: 0,
               maxWidth: 720,
-              color: "#cbd5e1",
+              color: "var(--text-soft)",
               fontSize: 16,
             }}
           >
-            Chart knitting patterns on a grid. The shape comes from the stitches:
-            cast on, type a row, and the next row is worked out for you.
+            A knitting chart editor. It counts your stitches, and flags the
+            rows that don't add up. Cast on, type a row, and the next row is
+            worked out from what that row produced.
           </p>
 
           <div style={{ display: "flex", gap: 12, flexWrap: "wrap", marginTop: 8 }}>
@@ -51,8 +51,8 @@ export default function HomePage() {
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
-                background: "#1d4ed8",
-                color: "#eff6ff",
+                background: "var(--accent)",
+                color: "var(--on-accent)",
                 fontWeight: 600,
                 border: "none",
                 cursor: "pointer",
@@ -63,18 +63,18 @@ export default function HomePage() {
 
             <button
               type="button"
-              onClick={() => navigate("/create")}
+              onClick={() => navigate("/info", { state: { pane: "start" } })}
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
-                background: "#1f2937",
-                color: "#e5e7eb",
+                background: "var(--raised)",
+                color: "var(--text)",
                 fontWeight: 600,
-                border: "1px solid #374151",
+                border: "1px solid var(--border)",
                 cursor: "pointer",
               }}
             >
-              New pattern
+              Getting started
             </button>
           </div>
         </div>

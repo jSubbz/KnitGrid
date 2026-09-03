@@ -1,0 +1,207 @@
+{
+  "code": "en",
+  "name": "English",
+  "reviewed": true,
+  "ui": {
+    "file": "File",
+    "new": "New",
+    "savePattern": "Save pattern...",
+    "loadPattern": "Load pattern...",
+    "print": "Print...",
+    "edit": "Edit",
+    "hotkeys": "Hotkeys",
+    "settings": "Settings",
+    "languages": "Languages",
+    "info": "Info",
+    "gettingStarted": "Getting started",
+    "about": "About KnitGrid",
+    "submitFeedback": "Submit feedback",
+    "home": "Home",
+    "undo": "Undo",
+    "redo": "Redo",
+    "flat": "Flat",
+    "circular": "Circular",
+    "left": "Left",
+    "centre": "Centre",
+    "right": "Right",
+    "designing": "Designing",
+    "knitting": "Knitting",
+    "toLastStitch": "To last stitch",
+    "erase": "Erase",
+    "nextRow": "Next row",
+    "turnWork": "Turn work",
+    "captureMotif": "Capture motif",
+    "setDestination": "Set destination",
+    "patternName": "Pattern name",
+    "untitled": "Untitled",
+    "createNewPattern": "Create New Pattern",
+    "stitchesToCastOn": "Stitches to cast on",
+    "castOnRange": "{min} to {max} stitches",
+    "visualAlignment": "Visual Alignment",
+    "alignmentHint": "Visual alignment can be toggled in the workspace to align in any direction.",
+    "notes": "Notes",
+    "notesPlaceholder": "Gauge, yarn, needle size, sizing.",
+    "startCreating": "Start Creating",
+    "cancel": "Cancel",
+    "key": "Key",
+    "written": "Written",
+    "blankIsKnit": "blank - knit",
+    "shortRowMark": "short row, turned before the end",
+    "info.tabStart": "Getting started",
+    "info.tabAbout": "About",
+    "info.tabFeedback": "Feedback",
+    "info.startIntro": "Charting here works the way knitting does. You cast on, work a row, and the row above follows from what you just did. You don't draw a shape first. Six steps and you've got the whole program.",
+    "info.step1Title": "Start a pattern",
+    "info.step1Body": "File → New. Give it a name and say how many stitches you're casting on.",
+    "info.step2Title": "Work a row",
+    "info.step2Body": "The number keys **0** to **9** work stitches - knit, purl, k2tog and the rest. The buttons do the same thing if you'd rather click, and they show you which number is which.",
+    "info.step3Title": "Let it count",
+    "info.step3Body": "A row ends when it has used up the stitches below it, not at a fixed width, so increases and decreases change the shape as you type. **Space** works across to the last stitch, where shaping usually goes. **Enter** starts the next row once the current one is finished. **Backspace** steps back. If you meant to stop early, use **Turn work** and it records a short row instead of an error.",
+    "info.step4Title": "Save it",
+    "info.step4Body": "File → Save pattern gives you one file holding the chart, the written instructions and the pattern itself. Open it in any browser to read it, print it, or send it to a friend. File → Load pattern opens it back up here to keep working.",
+    "info.step5Title": "Print it",
+    "info.step5Body": "File → Print. The checkboxes on that screen choose whether the instructions sit beside the chart and whether shorthand like `kfb` is used. Change them there and watch the preview, then set the ones you like as your defaults in Settings.",
+    "info.step6Title": "Settings, only if you want to",
+    "info.step6Body": "Language, which stitch sits on which number, theme, and what the print options start as. None of it is required. Every choice that affects your pattern is also there where you're working; Settings only decides what it starts as.",
+    "info.startFooter": "Nothing is stored for you. Your work survives a page reload, but close the tab without saving and it's gone, same as any unsaved file.",
+    "info.whyTitle": "Why this exists",
+    "info.why1": "I knit, and I write software. This is what came out of that.",
+    "info.why2": "Knitting makes its shape from increases and decreases. Most charting tools want you to draw the outline first and then fill it in with symbols, which is backwards from how the thing actually gets made. So this one works the other way round. You cast on a number and start typing, and the chart ends up whatever shape the stitches give it.",
+    "info.why3": "The other thing is counting. I get counting wrong all the time. So the program counts every row and tells me when one doesn't add up.",
+    "info.noServerTitle": "No account, no server, no cloud",
+    "info.noServer1": "I won't charge for this and I prefer not to pay for storage space full of other people's patterns. A pattern is a file; you save it, you keep it, you send it to a friend. Nothing here phones home and there's no sign-up. I intend to host this website service for many years and am not planning to implement new things once it is complete.",
+    "info.noServer2": "The catch: nothing is backed up for you. Close the tab without saving and the work is gone.",
+    "info.noAiTitle": "AI policy",
+    "info.noAi1": "While I did use AI to build the program and work in code, it isn't in the workspace on purpose. I have no intentions of adding it either. Nothing you chart gets sent anywhere, nothing suggests stitches at you, there's no assistant. Hopefully, it's a quiet program that just works.",
+    "info.whoForTitle": "Who it's for",
+    "info.whoFor1": "Knitters. Most knitters aren't technical and shouldn't have to be. You shouldn't have to go find a setting and change it to get the program working the way you need it to, and it should remember any changes you made for the next session. I hope it is intuitive to learn, and produces patterns smoothly for you. If you are having a specific workflow issue, please tell me about it; I'd love to make it easier to use for everyone.",
+    "info.devTitle": "For developers",
+    "info.dev1": "React 19, TypeScript, Vite. No backend. GitHub Pages redeploys on every push to main. `npm install`, then `npm run dev`.",
+    "info.dev2": "The part worth reading is `src/features/stitches/stitches.json`. Every stitch says what it takes from the row below and what it puts into its own row. Row width, whether a row is finished, whether it's short - all of that falls out of those two numbers, so adding a stitch is usually a table entry instead of code. The ones that don't fit are stitches carrying state between rows: the double stitch, anything slipped up several rows. Those are written up in the same file.",
+    "info.dev3": "Languages carry their own stitch abbreviations, not just interface text, so a pattern saved in German reads in French if that's what you have set. A new language is one JSON file.",
+    "info.dev4": "Issues and pull requests are welcome at",
+    "info.fbIntro": "Something broken, something missing, or something that just felt wrong to use - all of it is worth sending. KnitGrid has no server, so please consider opening a GitHub issue or emailing the developer directly.",
+    "info.fbBug": "Something broke",
+    "info.fbIdea": "Idea",
+    "info.fbGeneral": "General",
+    "info.fbSummaryLabel": "In one line",
+    "info.fbSummaryPlaceholder": "Enter did nothing at the end of a row",
+    "info.fbDetailLabel": "What happened, and what you expected",
+    "info.fbDetailPlaceholder": "Cast on 40, worked a row of knit and one k2tog, then pressed Enter...",
+    "info.fbChart": "Include the chart I have open.",
+    "info.fbChartNote": "It makes a bug far easier to reproduce. It contains your pattern and notes, and a GitHub issue is public, so leave it off if the pattern isn't one you want to share.",
+    "info.fbIssueButton": "Open a GitHub issue",
+    "info.fbIssueNote": "Opens a new issue with all of this filled in. You still get to read it and press submit. It needs a free GitHub account.",
+    "info.fbNoAccountTitle": "No GitHub account?",
+    "info.fbNoAccountBody": "Save the report to a file and email it instead. It holds everything above plus a log of what the program did, which is usually what makes a bug findable.",
+    "info.fbSaveButton": "Save the report",
+    "info.fbEmailButton": "Email it to jSubbz",
+    "info.fbSavedTo": "Saved to {where}. Attach it to the email.",
+    "settings.title": "Settings",
+    "settings.intro": "Nothing here is required. Every choice that affects a pattern is also where you work; this only decides what it starts as.",
+    "settings.appearance": "Appearance",
+    "settings.theme": "Theme",
+    "settings.themeHint": "System follows whatever your computer is set to.",
+    "settings.themeSystem": "System",
+    "settings.themeLight": "Light",
+    "settings.themeDark": "Dark",
+    "settings.language": "Language",
+    "settings.languageHint": "Stitch abbreviations are part of the language, so this changes the written pattern as well as the interface.",
+    "settings.languageSystem": "Follow my browser",
+    "settings.unchecked": "not checked by a knitter yet",
+    "settings.rest": "The stitch palette, the print defaults and the rest are still to come. They are listed in TODO.md."
+  },
+  "pattern": {
+    "castOn": "Cast on {count}.",
+    "workedFlat": "Worked flat.",
+    "workedRound": "Worked in the round.",
+    "row": "Row",
+    "round": "Round",
+    "stitchCount": "({count} sts)",
+    "turn": "Turn.",
+    "notesHeading": "Notes",
+    "repeat": "({unit}) x{times}",
+    "separator": ", ",
+    "countedStitch": "{abbr}{count}"
+  },
+  "stitches": {
+    "k": {
+      "abbr": "k",
+      "name": "knit"
+    },
+    "p": {
+      "abbr": "p",
+      "name": "purl"
+    },
+    "sl": {
+      "abbr": "sl",
+      "name": "slip"
+    },
+    "yo": {
+      "abbr": "yo",
+      "name": "yarn over"
+    },
+    "m1": {
+      "abbr": "m1",
+      "name": "make one"
+    },
+    "m1l": {
+      "abbr": "m1l",
+      "name": "make one left"
+    },
+    "m1r": {
+      "abbr": "m1r",
+      "name": "make one right"
+    },
+    "lli": {
+      "abbr": "lli",
+      "name": "left lifted increase"
+    },
+    "rli": {
+      "abbr": "rli",
+      "name": "right lifted increase"
+    },
+    "kf": {
+      "abbr": "kf",
+      "name": "knit front"
+    },
+    "kb": {
+      "abbr": "kb",
+      "name": "knit back"
+    },
+    "k2tog": {
+      "abbr": "k2tog",
+      "name": "knit two together"
+    },
+    "ssk": {
+      "abbr": "ssk",
+      "name": "slip slip knit"
+    },
+    "p2tog": {
+      "abbr": "p2tog",
+      "name": "purl two together"
+    },
+    "ssp": {
+      "abbr": "ssp",
+      "name": "slip slip purl"
+    },
+    "k3tog": {
+      "abbr": "k3tog",
+      "name": "knit three together"
+    },
+    "sssk": {
+      "abbr": "sssk",
+      "name": "slip slip slip knit"
+    },
+    "cdd": {
+      "abbr": "cdd",
+      "name": "centred double decrease"
+    },
+    "noStitch": null
+  },
+  "composites": {
+    "kfb": "kfb",
+    "lli": "lli",
+    "rli": "rli"
+  }
+}
