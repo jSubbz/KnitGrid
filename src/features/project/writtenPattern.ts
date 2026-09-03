@@ -56,7 +56,11 @@ function findRepeat(tokens: string[]): { unit: string[]; times: number } | null 
   return null;
 }
 
-/** "k, k, k, p" becomes "k3, p". */
+/**
+ * "k, k, k, p" becomes "k3, p1". Plain stitches always carry a count, because
+ * that is how patterns are written; a shaping stitch does not, since "m1r1"
+ * is not a thing anyone writes.
+ */
 function runLength(tokens: string[]): string {
   const parts: string[] = [];
   let i = 0;
@@ -64,14 +68,16 @@ function runLength(tokens: string[]): string {
   while (i < tokens.length) {
     let run = 1;
     while (tokens[i + run] === tokens[i]) run += 1;
-    const abbr = getStitch(tokens[i]).abbr || tokens[i];
-    parts.push(run > 1 ? `${abbr}${run}` : abbr);
+    const stitch = getStitch(tokens[i]);
+    const abbr = stitch.abbr || tokens[i];
+    const counted = run > 1 || stitch.category === "base";
+    parts.push(counted ? `${abbr}${run}` : abbr);
     i += run;
   }
   return parts.join(", ");
 }
 
-function rowText(row: PatternRow, options: WrittenOptions): string {
+export function rowInstruction(row: PatternRow, options: WrittenOptions): string {
   const ids = row.cells.map((cell) => cell.stitch);
   const tokens = options.composite ? applyComposites(ids) : ids;
   if (tokens.length === 0) return "-";
@@ -92,11 +98,7 @@ export function toWrittenPattern(
   const lines: string[] = [];
 
   lines.push(`Cast on ${project.castOn}.`);
-  lines.push(
-    project.knitMode === "round"
-      ? "Worked in the round. Every round reads right to left."
-      : "Worked flat. Right-side rows read right to left, wrong-side rows left to right."
-  );
+  lines.push(project.knitMode === "round" ? "Worked in the round." : "Worked flat.");
   lines.push("");
 
   project.rows.forEach((row, index) => {
@@ -104,7 +106,7 @@ export function toWrittenPattern(
     const produced = producedBy(row);
     const turn = row.short ? " Turn." : "";
     lines.push(
-      `${label} ${index + 1}: ${rowText(row, options)}.${turn} (${produced} sts)`
+      `${label} ${index + 1}: ${rowInstruction(row, options)}.${turn} (${produced} sts)`
     );
   });
 

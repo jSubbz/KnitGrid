@@ -3,7 +3,6 @@ import AppShell from "../shared/components/AppShell";
 import HomePage from "../pages/HomePage";
 import CreatePatternPage from "../pages/CreatePatternPage";
 import WorkspacePage from "../pages/WorkspacePage";
-import MyPatternsPage from "../pages/MyPatternsPage";
 import PrintPage from "../pages/PrintPage";
 import SettingsPage from "../pages/SettingsPage";
 
@@ -20,7 +19,6 @@ export const router = createBrowserRouter([
       { index: true, element: <HomePage /> },
       { path: "create", element: <CreatePatternPage /> },
       { path: "workspace", element: <WorkspacePage /> },
-      { path: "patterns", element: <MyPatternsPage /> },
       { path: "print", element: <PrintPage /> },
       { path: "settings", element: <SettingsPage /> },
     ],

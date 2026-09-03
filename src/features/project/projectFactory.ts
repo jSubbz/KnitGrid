@@ -12,11 +12,12 @@ export function clampCastOn(value: number): number {
  * A new project starts with one empty row waiting on the cast-on stitches.
  * Nothing is pre-allocated: rows appear as they are worked.
  */
-export function createProject(castOn = 6, notes = ""): KnitProject {
+export function createProject(castOn = 6, notes = "", name = ""): KnitProject {
   const rows: PatternRow[] = [createRow()];
 
   return {
     version: 3,
+    name,
     castOn: clampCastOn(castOn),
     notes,
     knitMode: "flat",

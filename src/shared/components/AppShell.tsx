@@ -1,31 +1,19 @@
-import { useMemo, useRef, useState } from "react";
-import { STITCH_LIST } from "../../features/stitches/stitches";
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
+import { useRef, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import { useWorkspace } from "../../features/workspace/state/WorkspaceContext";
-import { readProjectFile, saveProjectAs } from "../../features/project/storage";
-import { StorageFullError, saveProject } from "../../features/project/projectStore";
+import { buildPatternFile, readPatternFile } from "../../features/project/patternFile";
 import HotkeyEditorModal from "../../features/workspace/components/HotkeyEditorModal";
 
 type MenuKey = "file" | "edit" | "languages" | "info" | null;
 type LanguageKey = "English" | "German" | "French";
 
 export default function AppShell() {
-  const { state, dispatch, savedAs, setSavedAs } = useWorkspace();
-  const location = useLocation();
+  const { state, dispatch } = useWorkspace();
   const navigate = useNavigate();
   const [openMenu, setOpenMenu] = useState<MenuKey>(null);
   const [language, setLanguage] = useState<LanguageKey>("English");
   const [showHotkeyEditor, setShowHotkeyEditor] = useState(false);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const title = useMemo(() => {
-    if (location.pathname === "/create") return "New Pattern";
-    if (location.pathname === "/workspace") return "Workspace";
-    if (location.pathname === "/patterns") return "My Patterns";
-    if (location.pathname === "/print") return "Save Pattern";
-    if (location.pathname === "/settings") return "Settings";
-    return "KnitGrid";
-  }, [location.pathname]);
 
   const closeMenus = () => setOpenMenu(null);
 
@@ -34,43 +22,18 @@ export default function AppShell() {
     fileInputRef.current?.click();
   };
 
-  // Three different things a knitter might mean by "save", kept apart:
-  //   Save pattern      - the printable chart and written pattern, for paper
-  //   Backup on browser - localStorage, instant, updates the same entry
-  //   Export JSON       - the interchange format, for handing to another knitter
-  // Called a backup rather than a save on purpose: it lives in one browser on
-  // one machine and clearing site data destroys it, so the name should not
-  // suggest the pattern is safe.
-  const handleBackup = (askForName: boolean) => {
+  const handleSavePattern = () => {
     closeMenus();
-    const suggested = savedAs?.name ?? state.yarn.yarnName ?? "";
-    const name = askForName || !savedAs
-      ? window.prompt("Name this browser backup:", suggested || "Untitled")
-      : savedAs.name;
-    if (!name) return;
-
-    try {
-      const meta = saveProject(state, name, askForName ? undefined : savedAs?.id);
-      setSavedAs({ id: meta.id, name: meta.name });
-    } catch (error) {
-      window.alert(
-        error instanceof StorageFullError
-          ? error.message
-          : "Could not back up this pattern."
-      );
-    }
-  };
-
-  const handleSaveClick = async () => {
-    closeMenus();
-
-    try {
-      await saveProjectAs(state);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to save project.";
-      window.alert(message);
-    }
+    const name = (state.name || state.yarn.yarnName || "pattern")
+      .replace(/[^\w -]/g, "")
+      .trim() || "pattern";
+    const blob = new Blob([buildPatternFile(state)], { type: "text/html" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${name}.html`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   };
 
   const handleFileChange = async (
@@ -80,9 +43,8 @@ export default function AppShell() {
     if (!file) return;
 
     try {
-      const project = await readProjectFile(file);
+      const project = readPatternFile(await file.text());
       dispatch({ type: "LOAD_PROJECT", project });
-      setSavedAs(null);
       navigate("/workspace");
     } catch (error) {
       const message =
@@ -112,12 +74,6 @@ export default function AppShell() {
     boxShadow: "0 8px 20px rgba(0,0,0,0.35)",
     zIndex: 20,
     display: "grid",
-  };
-
-  const menuSeparatorStyle: React.CSSProperties = {
-    height: 1,
-    background: "#374151",
-    margin: "4px 0",
   };
 
   const menuItemStyle: React.CSSProperties = {
@@ -182,70 +138,29 @@ export default function AppShell() {
                 <button
                   type="button"
                   style={menuItemStyle}
-                  onClick={() => {
-                    closeMenus();
-                    navigate("/print");
-                  }}
+                  onClick={handleSavePattern}
                 >
                   Save pattern...
-                </button>
-
-                <div style={menuSeparatorStyle} />
-
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={() => handleBackup(false)}
-                >
-                  Backup on browser{savedAs ? `: ${savedAs.name}` : ""}
-                </button>
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={() => handleBackup(true)}
-                >
-                  Backup as...
-                </button>
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={() => {
-                    closeMenus();
-                    navigate("/patterns");
-                  }}
-                >
-                  My Patterns
-                </button>
-                <div
-                  style={{
-                    padding: "2px 12px 8px",
-                    fontSize: 11,
-                    color: "#9ca3af",
-                    maxWidth: 220,
-                    lineHeight: 1.4,
-                  }}
-                >
-                  Browser backups are convenience only. Clearing site data
-                  deletes them. Save the pattern or export the JSON for anything
-                  you need to keep.
-                </div>
-
-                <div style={menuSeparatorStyle} />
-
-                <button
-                  type="button"
-                  style={menuItemStyle}
-                  onClick={handleSaveClick}
-                >
-                  Export JSON...
                 </button>
                 <button
                   type="button"
                   style={menuItemStyle}
                   onClick={handleLoadClick}
                 >
-                  Import JSON...
+                  Load pattern...
                 </button>
+                <button
+                  type="button"
+                  style={menuItemStyle}
+                  onClick={() => {
+                    closeMenus();
+                    navigate("/print");
+                  }}
+                >
+                  Print...
+                </button>
+
+
               </div>
             )}
           </div>
@@ -355,29 +270,17 @@ export default function AppShell() {
               gap: 12,
             }}
           >
-            <span title={`${STITCH_LIST.length} stitches in the table`}>
-              v0.5.1-dev · {STITCH_LIST.length} stitches
-            </span>
+            <span>v0.7.1-dev</span>
             <span>{language}</span>
           </div>
         </div>
 
-        <div
-          style={{
-            padding: "8px 12px",
-            fontSize: 13,
-            color: "#94a3b8",
-            background: "#0f172a",
-          }}
-        >
-          {title}
-        </div>
       </header>
 
       <input
         ref={fileInputRef}
         type="file"
-        accept=".json,application/json"
+        accept=".html,.htm,.json,application/json,text/html"
         onChange={handleFileChange}
         style={{ display: "none" }}
       />

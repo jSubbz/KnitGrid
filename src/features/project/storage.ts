@@ -154,6 +154,7 @@ export function parseProjectJson(text: string): KnitProject {
   return {
     ...base,
     version: PROJECT_VERSION,
+    name: typeof raw.name === "string" ? raw.name : "",
     castOn,
     notes: typeof raw.notes === "string" ? raw.notes : "",
     knitMode: raw.knitMode === "round" ? "round" : "flat",

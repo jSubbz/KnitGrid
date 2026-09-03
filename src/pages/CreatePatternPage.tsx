@@ -23,10 +23,8 @@ const buttonStyle: React.CSSProperties = {
   fontWeight: 600,
 };
 
-/**
- * New-pattern wizard. Only the cast-on is required - it seeds the live stitch
- * count for the first row, and everything above derives from there.
- */
+const labelStyle: React.CSSProperties = { display: "grid", gap: 6, textAlign: "left" };
+
 export default function CreatePatternPage() {
   const { dispatch } = useWorkspace();
   const navigate = useNavigate();
@@ -42,31 +40,19 @@ export default function CreatePatternPage() {
 
   const start = () => {
     if (!valid) return;
-    dispatch({ type: "RESET_PROJECT", castOn: parsed, notes });
+    dispatch({ type: "RESET_PROJECT", castOn: parsed, notes, name: "Untitled" });
     dispatch({ type: "SET_KNIT_MODE", mode: knitMode });
     dispatch({ type: "SET_ANCHOR", anchor });
     navigate("/workspace");
   };
 
   return (
-    <main
-      style={{
-        display: "grid",
-        gap: 20,
-        maxWidth: 560,
-        color: "#e5e7eb",
-        padding: 24,
-      }}
-    >
-      <div>
-        <h1 style={{ margin: 0, color: "#f8fafc" }}>New pattern</h1>
-        <p style={{ margin: "8px 0 0", color: "#94a3b8", fontSize: 14 }}>
-          The cast-on is all that is needed to start. Every row above it is
-          worked out from the stitches you enter.
-        </p>
-      </div>
+    <main style={{ display: "grid", gap: 20, maxWidth: 520, color: "#e5e7eb", padding: 24 }}>
+      <h1 style={{ margin: 0, color: "#f8fafc", textAlign: "center" }}>
+        Create New Pattern
+      </h1>
 
-      <label style={{ display: "grid", gap: 6 }}>
+      <label style={labelStyle}>
         <span>Stitches to cast on</span>
         <input
           type="number"
@@ -88,8 +74,7 @@ export default function CreatePatternPage() {
         </span>
       </label>
 
-      <div style={{ display: "grid", gap: 6 }}>
-        <span>Worked</span>
+      <div style={labelStyle}>
         <div style={{ display: "flex", gap: 8 }}>
           {(["flat", "round"] as KnitMode[]).map((mode) => (
             <button
@@ -107,23 +92,19 @@ export default function CreatePatternPage() {
         </div>
       </div>
 
-      <div style={{ display: "grid", gap: 6 }}>
-        <span>
-          Row alignment{" "}
-          <span style={{ color: "#6b7280" }}>· changeable later</span>
-        </span>
+      <div style={labelStyle}>
+        <span>Visual Alignment</span>
         <div style={{ display: "flex", gap: 8 }}>
           {(
             [
-              ["center", "Centre", "Shaping spreads evenly to both sides"],
-              ["right", "Right", "Rows line up where knitting starts"],
-              ["left", "Left", "Rows line up at the far edge"],
-            ] as [RowAnchor, string, string][]
-          ).map(([value, label, hint]) => (
+              ["left", "Left"],
+              ["center", "Centre"],
+              ["right", "Right"],
+            ] as [RowAnchor, string][]
+          ).map(([value, label]) => (
             <button
               key={value}
               type="button"
-              title={hint}
               onClick={() => setAnchor(value)}
               style={{
                 ...buttonStyle,
@@ -135,19 +116,18 @@ export default function CreatePatternPage() {
           ))}
         </div>
         <span style={{ fontSize: 12, color: "#6b7280" }}>
-          Where a row sits when it is narrower than the widest row.
+          Visual alignment can be toggled in the workspace to align in any
+          direction.
         </span>
       </div>
 
-      <label style={{ display: "grid", gap: 6 }}>
-        <span>
-          Notes <span style={{ color: "#6b7280" }}>· optional</span>
-        </span>
+      <label style={labelStyle}>
+        <span>Notes</span>
         <textarea
           rows={5}
           value={notes}
           onChange={(event) => setNotes(event.target.value)}
-          placeholder="Gauge, yarn, needle size, sizing — anything you want kept with the chart."
+          placeholder="Gauge, yarn, needle size, sizing."
           style={{ ...fieldStyle, resize: "vertical", fontFamily: "inherit" }}
         />
       </label>
@@ -163,7 +143,7 @@ export default function CreatePatternPage() {
             cursor: valid ? "pointer" : "not-allowed",
           }}
         >
-          Start charting
+          Start Creating
         </button>
         <button type="button" onClick={() => navigate("/")} style={buttonStyle}>
           Cancel

@@ -63,7 +63,7 @@ export default function HomePage() {
 
             <button
               type="button"
-              onClick={() => navigate("/patterns")}
+              onClick={() => navigate("/create")}
               style={{
                 padding: "10px 14px",
                 borderRadius: 8,
@@ -74,7 +74,7 @@ export default function HomePage() {
                 cursor: "pointer",
               }}
             >
-              My Patterns
+              New pattern
             </button>
           </div>
         </div>

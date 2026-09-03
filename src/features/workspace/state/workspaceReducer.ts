@@ -40,6 +40,7 @@ export type CascadeChoice = "flag" | "pad" | "clear";
 export type WorkspaceAction =
   | { type: "SET_YARN_FIELD"; field: YarnField; value: string }
   | { type: "SET_NOTES"; value: string }
+  | { type: "SET_NAME"; value: string }
   | { type: "SET_CAST_ON"; value: number }
   | { type: "SET_KNIT_MODE"; mode: KnitMode }
   | { type: "SET_WORKSPACE_MODE"; mode: WorkspaceMode }
@@ -119,6 +120,9 @@ export function workspaceReducer(
 
     case "SET_NOTES":
       return { ...state, notes: action.value };
+
+    case "SET_NAME":
+      return { ...state, name: action.value };
 
     case "SET_CAST_ON":
       return { ...state, castOn: clampCastOn(action.value) };

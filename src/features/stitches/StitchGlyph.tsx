@@ -25,7 +25,7 @@ export default function StitchGlyph({
     );
   }
 
-  const pad = 3;
+  const pad = size * 0.16;
   const top = pad;
   const bottom = size - pad;
   const left = pad;
@@ -43,26 +43,43 @@ export default function StitchGlyph({
   const badge =
     category === "increase" ? "+" : category === "decrease" ? "−" : null;
 
+  // A lifted increase is picked up out of the fabric below, so it gets a foot
+  // at the base of the stroke. A make-one has none.
+  const lifted = stitch.id === "lli" || stitch.id === "rli";
+  const footX = lean === "right" ? left : right;
+  const footWidth = size * 0.5;
+
   // Tucked into the corner the stroke leaves empty.
-  const badgeX = lean === "right" ? left + 1.5 : lean === "left" ? right - 1.5 : size / 2;
-  const badgeY = lean === "center" ? bottom - 0.5 : top + 5;
+  const badgeSize = size * 0.5;
+  const inset = badgeSize * 0.4;
+  const badgeX = lean === "right" ? left + inset : lean === "left" ? right - inset : size / 2;
+  const badgeY = lean === "center" ? bottom - inset : top + inset * 1.4;
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} aria-hidden>
       <path
         d={stroke}
         stroke={color}
-        strokeWidth={1.6}
+        strokeWidth={Math.max(1.2, size * 0.09)}
         strokeLinecap="round"
         strokeLinejoin="round"
         fill="none"
       />
+      {lifted && (
+        <path
+          d={`M ${footX - footWidth / 2} ${bottom} L ${footX + footWidth / 2} ${bottom}`}
+          stroke={color}
+          strokeWidth={Math.max(1.2, size * 0.09)}
+          strokeLinecap="round"
+        />
+      )}
       {badge && (
         <text
           x={badgeX}
           y={badgeY}
-          fontSize={8}
+          fontSize={badgeSize}
           fill={color}
+          fontWeight={700}
           textAnchor="middle"
           dominantBaseline="middle"
         >

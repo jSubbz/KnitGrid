@@ -6,7 +6,6 @@ import {
   useMemo,
   useReducer,
   useRef,
-  useState,
   type Dispatch,
   type ReactNode,
 } from "react";
@@ -24,7 +23,7 @@ type HistoryAction =
   | { type: "UNDO" }
   | { type: "REDO" }
   | { type: "LOAD_PROJECT"; project: KnitProject }
-  | { type: "RESET_PROJECT"; castOn?: number; notes?: string };
+  | { type: "RESET_PROJECT"; castOn?: number; notes?: string; name?: string };
 
 interface HistoryState {
   past: KnitProject[];
@@ -37,9 +36,6 @@ interface WorkspaceContextValue {
   dispatch: Dispatch<HistoryAction>;
   canUndo: boolean;
   canRedo: boolean;
-  /** Set when the working project came from a library entry. */
-  savedAs: { id: string; name: string } | null;
-  setSavedAs: (savedAs: { id: string; name: string } | null) => void;
 }
 
 const WorkspaceContext = createContext<WorkspaceContextValue | null>(null);
@@ -86,7 +82,7 @@ function historyReducer(state: HistoryState, action: HistoryAction): HistoryStat
   if (action.type === "RESET_PROJECT") {
     return {
       past: [],
-      present: createProject(action.castOn ?? 6, action.notes ?? ""),
+      present: createProject(action.castOn ?? 6, action.notes ?? "", action.name ?? ""),
       future: [],
     };
   }
@@ -110,17 +106,13 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
   // first render rather than starting blank and replacing it.
   const [history, dispatch] = useReducer(historyReducer, undefined, () => ({
     past: [],
-    present: loadWorking()?.project ?? createProject(),
+    present: loadWorking() ?? createProject(),
     future: [],
   }));
 
-  const [savedAs, setSavedAs] = useState<{ id: string; name: string } | null>(
-    () => loadWorking()?.savedAs ?? null
-  );
-
   useEffect(() => {
-    saveWorking({ project: history.present, savedAs: savedAs ?? undefined });
-  }, [history.present, savedAs]);
+    saveWorking(history.present);
+  }, [history.present]);
 
   // The wrapper below needs the state a dispatch will be applied to. Effects
   // flush between input events, so this is current by the time the next
@@ -157,10 +149,8 @@ export function WorkspaceProvider({ children }: { children: ReactNode }) {
       dispatch: logged,
       canUndo: history.past.length > 0,
       canRedo: history.future.length > 0,
-      savedAs,
-      setSavedAs,
     }),
-    [history, logged, savedAs]
+    [history, logged]
   );
 
   return (

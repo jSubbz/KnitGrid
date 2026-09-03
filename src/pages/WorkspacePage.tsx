@@ -3,10 +3,11 @@ import { useNavigate } from "react-router-dom";
 import WorkspaceGrid from "../features/workspace/components/WorkspaceGrid";
 import { useWorkspace } from "../features/workspace/state/WorkspaceContext";
 import { DEFAULT_PALETTE, getStitch } from "../features/stitches/stitches";
+import StitchGlyph from "../features/stitches/StitchGlyph";
+import Segmented from "../shared/components/Segmented";
 import { liveCountFor, paintOutcome, rowStatus } from "../features/project/rowMath";
 import { eventToHotkey, loadHotkeyBindings } from "../features/hotkeys/hotkeys";
-import type { RowAnchor } from "../features/project/types";
-import { clearLog, getLog, logNote, saveLog } from "../features/devlog/devlog";
+import { logNote, saveLog } from "../features/devlog/devlog";
 
 /**
  * Reads a stitch off the number row or the numpad. Matching on `code` as well
@@ -48,158 +49,88 @@ export default function WorkspacePage() {
     gridWrapRef.current?.focus();
   }, []);
 
-  // Read during render: every dispatch appends to the log and re-renders, so
-  // this tracks without an effect syncing one source of truth into another.
-  const logCount = getLog().length;
+  const act: React.CSSProperties = { ...buttonStyle, minHeight: 44 };
+
+  const run = (action: Parameters<typeof dispatch>[0]) => {
+    dispatch(action);
+    gridWrapRef.current?.focus();
+  };
+
+  const paint = (stitch: string) => {
+    setBlocked(null);
+    if (paintOutcome(state, stitch) === "overflow") {
+      setPendingForce(stitch);
+    } else {
+      dispatch({ type: "PAINT_AND_ADVANCE", stitch });
+    }
+    gridWrapRef.current?.focus();
+  };
+
   const current = rowStatus(state, state.cursor.row, true);
   const live = liveCountFor(state, state.cursor.row);
 
   return (
-    <main style={{ display: "grid", gap: 16, color: "#e5e7eb" }}>
-      <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+    <main style={{ display: "grid", gap: 16, color: "#e5e7eb", width: "100%" }}>
+      <div
+        style={{
+          display: "flex",
+          gap: 14,
+          flexWrap: "wrap",
+          alignItems: "center",
+          paddingBottom: 4,
+          borderBottom: "1px solid #1f2937",
+        }}
+      >
         <button type="button" style={buttonStyle} onClick={() => navigate("/")}>
           Home
         </button>
-        <button
-          type="button"
-          style={buttonStyle}
-          disabled={!canUndo}
-          onClick={() => dispatch({ type: "UNDO" })}
-        >
-          Undo
-        </button>
-        <button
-          type="button"
-          style={buttonStyle}
-          disabled={!canRedo}
-          onClick={() => dispatch({ type: "REDO" })}
-        >
-          Redo
-        </button>
 
-        <span style={{ width: 12 }} />
-
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={() =>
-            dispatch({
-              type: "SET_KNIT_MODE",
-              mode: state.knitMode === "flat" ? "round" : "flat",
-            })
+        <input
+          value={state.name}
+          onChange={(event) =>
+            dispatch({ type: "SET_NAME", value: event.target.value })
           }
-        >
-          {state.knitMode === "flat" ? "Flat" : "In the round"}
-        </button>
-
-        <span style={{ fontSize: 12, color: "#6b7280", paddingLeft: 4 }}>Align</span>
-        {(
-          [
-            ["center", "Centre"],
-            ["right", "Right"],
-            ["left", "Left"],
-          ] as [RowAnchor, string][]
-        ).map(([value, label]) => (
-          <button
-            key={value}
-            type="button"
-            title={`Where a row sits when it is narrower than the widest row (${label.toLowerCase()})`}
-            style={{
-              ...buttonStyle,
-              background: state.anchor === value ? "#1d4ed8" : "#1f2937",
-            }}
-            onClick={() => dispatch({ type: "SET_ANCHOR", anchor: value })}
-          >
-            {label}
-          </button>
-        ))}
-
-        <span style={{ width: 12 }} />
-
-        <button
-          type="button"
+          placeholder="Untitled"
+          aria-label="Pattern name"
           style={{
-            ...buttonStyle,
-            background: state.workspaceMode === "track" ? "#047857" : "#1f2937",
+            padding: "6px 10px",
+            borderRadius: 6,
+            border: "1px solid #374151",
+            background: "#0f172a",
+            color: "#f8fafc",
+            fontSize: 14,
+            fontWeight: 600,
+            minWidth: 180,
           }}
-          title="Follow the chart on the needles: wrong-side rows flip and show the stitch you actually work"
-          onClick={() =>
-            dispatch({
-              type: "SET_WORKSPACE_MODE",
-              mode: state.workspaceMode === "track" ? "design" : "track",
-            })
-          }
-        >
-          {state.workspaceMode === "track" ? "Knitting" : "Designing"}
-        </button>
+        />
 
-        <button
-          type="button"
-          style={{ ...buttonStyle, borderColor: "#b45309" }}
-          title="Turn early, making this a short row. Reshapes everything above it."
-          disabled={current.remaining <= 0}
-          onClick={() => {
-            dispatch({ type: "TURN_WORK" });
-            gridWrapRef.current?.focus();
-          }}
-        >
-          Turn work
-        </button>
+        <Segmented
+          value={state.knitMode}
+          onChange={(mode) => dispatch({ type: "SET_KNIT_MODE", mode })}
+          options={[
+            { value: "flat", label: "Flat" },
+            { value: "round", label: "Circular" },
+          ]}
+        />
 
-        <span style={{ width: 12 }} />
+        <Segmented
+          value={state.anchor}
+          onChange={(anchor) => dispatch({ type: "SET_ANCHOR", anchor })}
+          options={[
+            { value: "left", label: "Left" },
+            { value: "center", label: "Centre" },
+            { value: "right", label: "Right" },
+          ]}
+        />
 
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={() => dispatch({ type: "CAPTURE_MOTIF" })}
-        >
-          Capture motif
-        </button>
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={() => dispatch({ type: "SET_DESTINATION_FROM_SELECTION" })}
-        >
-          Set destination
-        </button>
-
-        <span style={{ width: 12 }} />
-
-        <button
-          type="button"
-          style={buttonStyle}
-          title="Mark this moment in the session log"
-          onClick={() => {
-            const note = window.prompt("What went wrong here?");
-            if (note) logNote(note, state);
-            gridWrapRef.current?.focus();
-          }}
-        >
-          Flag
-        </button>
-        <button
-          type="button"
-          style={buttonStyle}
-          title="Write the session log out as a file"
-          onClick={() => {
-            void saveLog(state).then(
-              (where) => setBlocked(`Log written to ${where}`),
-              (error: unknown) => setBlocked(`Could not save log: ${String(error)}`)
-            );
-          }}
-        >
-          Save log ({logCount})
-        </button>
-        <button
-          type="button"
-          style={buttonStyle}
-          onClick={() => {
-            clearLog();
-            dispatch({ type: "CLEAR_SELECTION" });
-          }}
-        >
-          Clear log
-        </button>
+        <Segmented
+          value={state.workspaceMode}
+          onChange={(mode) => dispatch({ type: "SET_WORKSPACE_MODE", mode })}
+          options={[
+            { value: "design", label: "Designing" },
+            { value: "track", label: "Knitting" },
+          ]}
+        />
       </div>
 
       <div style={{ fontSize: 13, color: "#94a3b8" }}>
@@ -248,12 +179,7 @@ export default function WorkspacePage() {
             setBlocked(null);
 
 
-            const outcome = paintOutcome(state, stitch);
-            if (outcome === "overflow") {
-              setPendingForce(stitch);
-            } else {
-              dispatch({ type: "PAINT_AND_ADVANCE", stitch });
-            }
+            paint(stitch);
             return;
           }
 
@@ -340,20 +266,154 @@ export default function WorkspacePage() {
         <WorkspaceGrid />
       </div>
 
-      <div style={{ display: "grid", gap: 4 }}>
-        <div style={{ fontSize: 12, color: "#6b7280" }}>
-          {DEFAULT_PALETTE.map((id, digit) => (
-            <span key={id} style={{ marginRight: 12 }}>
-              <strong style={{ color: "#94a3b8" }}>{digit}</strong> {getStitch(id).abbr}
-            </span>
-          ))}
+      {/* A focusable div never raises a keyboard on a phone, so every key has
+          a button too. Tapping returns focus to the grid. */}
+      <div
+        style={{
+          display: "grid",
+          gap: 10,
+          width: "100%",
+          padding: "12px 14px",
+          borderRadius: 10,
+          border: "1px solid #1f2937",
+          background: "#0f172a",
+          boxSizing: "border-box",
+        }}
+      >
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+          {DEFAULT_PALETTE.map((id, digit) => {
+            const stitch = getStitch(id);
+            return (
+              <button
+                key={id}
+                type="button"
+                title={`${stitch.name} — key ${digit}`}
+                onClick={() => paint(id)}
+                style={{
+                  minWidth: 52,
+                  minHeight: 48,
+                  display: "grid",
+                  placeItems: "center",
+                  gap: 1,
+                  padding: "4px 8px",
+                  borderRadius: 8,
+                  border: "1px solid #374151",
+                  background: "#111827",
+                  color: "#e5e7eb",
+                  cursor: "pointer",
+                }}
+              >
+                <StitchGlyph stitch={stitch} size={18} color="#e5e7eb" />
+                <span style={{ fontSize: 11 }}>{stitch.abbr.toUpperCase()}</span>
+                <span style={{ fontSize: 9, color: "#6b7280" }}>{digit}</span>
+              </button>
+            );
+          })}
         </div>
-        <div style={{ fontSize: 12, color: "#4b5563" }}>
-          <strong style={{ color: "#94a3b8" }}>Space</strong> works to the last
-          stitch, where shaping goes — press again to take the last one ·{" "}
-          <strong style={{ color: "#94a3b8" }}>Enter</strong> starts the next row
-          · <strong style={{ color: "#94a3b8" }}>Shift+Enter</strong> turns early
-          for a short row
+
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "center" }}>
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              style={act}
+              disabled={!canUndo}
+              onClick={() => run({ type: "UNDO" })}
+            >
+              Undo
+            </button>
+            <button
+              type="button"
+              style={act}
+              disabled={!canRedo}
+              onClick={() => run({ type: "REDO" })}
+            >
+              Redo
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 6 }}>
+            <button
+              type="button"
+              style={act}
+              title="Work to the last stitch, where shaping goes. Again takes the last one. (Space)"
+              onClick={() => {
+                setBlocked(null);
+                run({ type: "FILL_ROW" });
+              }}
+            >
+              To last stitch
+            </button>
+            <button
+              type="button"
+              style={act}
+              title="Erase the stitch before the cursor (Backspace)"
+              onClick={() => run({ type: "ERASE_AND_BACKSPACE" })}
+            >
+              Erase
+            </button>
+            <button
+              type="button"
+              style={act}
+              title="Start the next row, once this one is finished (Enter)"
+              disabled={
+                current.remaining > 0 &&
+                (state.rows[state.cursor.row]?.cells.length ?? 0) > 0
+              }
+              onClick={() => run({ type: "NEXT_ROW" })}
+            >
+              Next row
+            </button>
+            <button
+              type="button"
+              style={{ ...act, borderColor: "#b45309" }}
+              title="Turn early, making this a short row. Reshapes everything above it. (Shift+Enter)"
+              disabled={current.remaining <= 0}
+              onClick={() => run({ type: "TURN_WORK" })}
+            >
+              Turn work
+            </button>
+          </div>
+
+          <div style={{ display: "flex", gap: 6 }}>
+            <button type="button" style={act} onClick={() => run({ type: "CAPTURE_MOTIF" })}>
+              Capture motif
+            </button>
+            <button
+              type="button"
+              style={act}
+              onClick={() => run({ type: "SET_DESTINATION_FROM_SELECTION" })}
+            >
+              Set destination
+            </button>
+          </div>
+
+          {/* Development aids. Both come out before release. */}
+          <div style={{ display: "flex", gap: 6, marginLeft: "auto", opacity: 0.6 }}>
+            <button
+              type="button"
+              style={act}
+              title="Stamp a note into the session log at this moment"
+              onClick={() => {
+                const note = window.prompt("What went wrong here?");
+                if (note) logNote(note, state);
+                gridWrapRef.current?.focus();
+              }}
+            >
+              Flag
+            </button>
+            <button
+              type="button"
+              style={act}
+              onClick={() => {
+                void saveLog(state).then(
+                  (where) => setBlocked(`Log written to ${where}`),
+                  (error: unknown) => setBlocked(`Could not save log: ${String(error)}`)
+                );
+              }}
+            >
+              Save log
+            </button>
+          </div>
         </div>
       </div>
 

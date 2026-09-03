@@ -18,6 +18,10 @@ currently hardcoded or hidden:
   the chart itself always light; both should be deliberate rather than incidental.
 - **Chart glyph convention.** Whether knit draws as `k` or as a blank cell, which
   is what printed charts use.
+- **Printing preferences.** Whether written instructions sit beside their chart
+  row or in a block after it, and whether shorthand notation is on. The print
+  screen keeps its own checkboxes for people who would rather not go looking in
+  settings; the setting just decides what they start as.
 
 ## Language support
 
@@ -59,11 +63,12 @@ translating the interface.
 
 ## Project handling
 
-- **Saved project library.** Projects are files on disk; the Library page can
-  open one but has nothing to list.
-- **Written pattern export.** The chart holds unambiguous per-stitch data, so it
-  can emit written notation in either the composite or the bare convention. The
-  composite table in `stitches.json` is the start of this.
+- **Nothing here for now.** A saved pattern is a self-contained page carrying its
+  own chart data, so saving, sharing and reopening are all one file and one door.
+- **Shared library.** A catalogue of patterns knitters have published for others
+  to use. Needs a server, accounts and moderation before any of it is real, so
+  it is a long way from a static site. Saving a pattern and sending the file
+  covers most of the value with none of that.
 
 ## Engineering
 

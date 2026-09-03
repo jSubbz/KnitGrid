@@ -70,11 +70,13 @@ export interface YarnDetails {
   patternTags: string;
 }
 
-export const MIN_CAST_ON = 6;
+export const MIN_CAST_ON = 1;
 export const MAX_CAST_ON = 128;
 
 export interface KnitProject {
   version: number;
+  /** Shown on the printed pattern and used for exported filenames. */
+  name: string;
   /** Stitches cast on. Seeds the live count for row 0. */
   castOn: number;
   /** Free text from the new-pattern wizard: gauge, yarn, sizing. */
